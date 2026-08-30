@@ -101,6 +101,11 @@ async def root():
     }
 
 
+@app.get("/healthz")
+async def healthz():
+    return {"status": "ok"}
+
+
 # =====================================================
 # STARTUP
 # =====================================================
@@ -184,13 +189,14 @@ async def startup():
         # ---------------------------------------------
 
         await db.email_verifications.create_index(
-            "email",
-            unique=True
+        "email",
+        unique=True
     )
 
         await db.email_verifications.create_index(
-            "expires_at"
-        )
+        "expires_at",
+        expireAfterSeconds=0
+    )
 
         # ---------------------------------------------
         # STORAGE
