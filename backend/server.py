@@ -188,15 +188,7 @@ async def startup():
         # EMAIL VERIFICATIONS
         # ---------------------------------------------
 
-        await db.email_verifications.create_index(
-        "email",
-        unique=True
-    )
-
-        await db.email_verifications.create_index(
-        "expires_at",
-        expireAfterSeconds=0
-    )
+  
 
         # ---------------------------------------------
         # STORAGE
