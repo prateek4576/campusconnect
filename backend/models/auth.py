@@ -1,27 +1,8 @@
+from typing import Optional
 from pydantic import BaseModel, EmailStr
 
 
-# =====================================================
-# EMAIL VERIFICATION / REGISTRATION
-# =====================================================
 
-class RequestVerificationInput(BaseModel):
-    name: str
-    email: EmailStr
-    phone: str
-
-
-class VerifyEmailInput(BaseModel):
-    email: EmailStr
-    otp: str
-
-
-class CompleteRegistrationInput(BaseModel):
-    name: str
-    email: EmailStr
-    phone: str
-    password: str
-    verification_token: str
 
 
 # =====================================================
@@ -74,7 +55,18 @@ class RegisterInput(BaseModel):
     phone: str
     password: str
 
-    # =====================================================
+# =====================================================
+# MANUAL REGISTRATION
+# =====================================================
+
+class RegisterInput(BaseModel):
+    name: str
+    email: EmailStr
+    phone: Optional[str] = None
+    password: str
+
+
+# =====================================================
 # GOOGLE AUTHENTICATION
 # =====================================================
 

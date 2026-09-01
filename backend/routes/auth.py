@@ -14,29 +14,13 @@ from models.auth import (
     AdminLoginInput,
     AdminUserUpdate,
     UserProfileUpdate,
-    RequestVerificationInput,
-    VerifyEmailInput,
-    CompleteRegistrationInput,
     GoogleLoginInput,
 )
 
-from utils.email import send_verification_email
 
 from fastapi import APIRouter, HTTPException, Response, Depends, Request
 
 from config.database import db
-from models.auth import (
-    RegisterInput,
-    LoginInput,
-    AdminLoginInput,
-    AdminUserUpdate,
-    UserProfileUpdate,
-
-    # Email verification
-    RequestVerificationInput,
-    VerifyEmailInput,
-    CompleteRegistrationInput,
-)
 
 from utils.auth import (
     hash_password,
@@ -92,484 +76,6 @@ def generate_otp() -> str:
 def generate_verification_token() -> str:
     return secrets.token_urlsafe(32)
 
-
-
-
-# =====================================================
-# REGISTER
-# =====================================================
-# =====================================================
-# REQUEST EMAIL VERIFICATION
-# =====================================================
-
-# =====================================================
-# REQUEST EMAIL VERIFICATION
-# =====================================================
-
-@router.post("/register/request")
-async def request_registration(
-    payload: RequestVerificationInput
-):
-    email = payload.email.lower().strip()
-
-    # ---------------------------------------------
-    # Check if email is already registered
-    # ---------------------------------------------
-
-    existing = await db.users.find_one({
-        "email": email
-    })
-
-    if existing:
-        raise HTTPException(
-            status_code=400,
-            detail="Email already registered"
-        )
-
-    # ---------------------------------------------
-    # Generate OTP
-    # ---------------------------------------------
-
-    otp = generate_otp()
-
-    otp_hash = hash_otp(otp)
-
-    expires_at = (
-        datetime.now(timezone.utc)
-        + timedelta(minutes=10)
-    )
-
-    # ---------------------------------------------
-    # Remove previous verification
-    # ---------------------------------------------
-
-    await db.email_verifications.delete_many({
-        "email": email
-    })
-
-    # ---------------------------------------------
-    # Store temporary registration
-    # ---------------------------------------------
-
-    verification_doc = {
-        "id": str(uuid.uuid4()),
-        "name": payload.name.strip(),
-        "email": email,
-        "phone": payload.phone.strip(),
-        "otp_hash": otp_hash,
-        "expires_at": expires_at,
-        "attempts": 0,
-        "verified": False,
-        "created_at": datetime.now(timezone.utc),
-    }
-
-    await db.email_verifications.insert_one(
-        verification_doc
-    )
-
-    # ---------------------------------------------
-    # Send verification email
-    # ---------------------------------------------
-
-    try:
-        send_verification_email(
-            email,
-            otp
-        )
-
-    except Exception as e:
-
-        await db.email_verifications.delete_one({
-            "id": verification_doc["id"]
-        })
-
-        print(
-            "Email sending error:",
-            str(e)
-        )
-
-        raise HTTPException(
-            status_code=500,
-            detail="Could not send verification email"
-        )
-
-    # ---------------------------------------------
-    # Success
-    # ---------------------------------------------
-
-    return {
-        "success": True,
-        "message": "Verification code sent"
-    }
-
-# =====================================================
-# VERIFY EMAIL
-# =====================================================
-
-@router.post("/verify-email")
-async def verify_email(
-    payload: VerifyEmailInput
-):
-    email = payload.email.lower().strip()
-
-    verification = await db.email_verifications.find_one({
-        "email": email
-    })
-
-    if not verification:
-        raise HTTPException(
-            status_code=400,
-            detail="Verification request not found"
-        )
-
-    # ---------------------------------------------
-    # Check expiration
-    # ---------------------------------------------
-
-    now = datetime.now(timezone.utc)
-
-    expires_at = verification["expires_at"]
-
-    if expires_at.tzinfo is None:
-        expires_at = expires_at.replace(
-            tzinfo=timezone.utc
-        )
-
-    if now > expires_at:
-
-        await db.email_verifications.delete_one({
-            "email": email
-        })
-
-        raise HTTPException(
-            status_code=400,
-            detail="Verification code has expired"
-        )
-
-    # ---------------------------------------------
-    # Limit attempts
-    # ---------------------------------------------
-
-    if verification.get("attempts", 0) >= 5:
-
-        raise HTTPException(
-            status_code=400,
-            detail="Too many incorrect attempts. Please request a new code."
-        )
-
-    # ---------------------------------------------
-    # Check OTP
-    # ---------------------------------------------
-
-    if hash_otp(payload.otp.strip()) != verification["otp_hash"]:
-
-        await db.email_verifications.update_one(
-            {
-                "email": email
-            },
-            {
-                "$inc": {
-                    "attempts": 1
-                }
-            }
-        )
-
-        raise HTTPException(
-            status_code=400,
-            detail="Incorrect verification code"
-        )
-
-    # ---------------------------------------------
-    # Generate temporary verification token
-    # ---------------------------------------------
-
-    verification_token = generate_verification_token()
-
-    verification_token_hash = hashlib.sha256(
-        verification_token.encode()
-    ).hexdigest()
-
-    await db.email_verifications.update_one(
-        {
-            "email": email
-        },
-        {
-            "$set": {
-                "verified": True,
-                "verification_token_hash":
-                    verification_token_hash,
-                "verified_at": now
-            }
-        }
-    )
-
-    return {
-        "success": True,
-        "message": "Email verified successfully",
-        "verification_token": verification_token
-    }
-
-
-# =====================================================
-# COMPLETE REGISTRATION
-# =====================================================
-
-@router.post("/register/complete")
-async def complete_registration(
-    payload: CompleteRegistrationInput,
-    response: Response
-):
-    email = payload.email.lower().strip()
-
-    # ---------------------------------------------
-    # Validate password
-    # ---------------------------------------------
-
-    if len(payload.password) < 6:
-
-        raise HTTPException(
-            status_code=400,
-            detail="Password must be at least 6 characters"
-        )
-
-    # ---------------------------------------------
-    # Check existing account
-    # ---------------------------------------------
-
-    existing = await db.users.find_one({
-        "email": email
-    })
-
-    if existing:
-
-        raise HTTPException(
-            status_code=400,
-            detail="Email already registered"
-        )
-
-    # ---------------------------------------------
-    # Find verification
-    # ---------------------------------------------
-
-    verification = await db.email_verifications.find_one({
-        "email": email,
-        "verified": True
-    })
-
-    if not verification:
-
-        raise HTTPException(
-            status_code=400,
-            detail="Email has not been verified"
-        )
-
-    # ---------------------------------------------
-    # Verify temporary token
-    # ---------------------------------------------
-
-    token_hash = hashlib.sha256(
-        payload.verification_token.encode()
-    ).hexdigest()
-
-    if token_hash != verification.get(
-        "verification_token_hash"
-    ):
-
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid verification session"
-        )
-
-    # ---------------------------------------------
-    # Create user
-    # ---------------------------------------------
-
-    user_doc = {
-        "id": str(uuid.uuid4()),
-
-        "name": payload.name.strip(),
-
-        "email": email,
-
-        "phone": payload.phone.strip(),
-
-        "password_hash": hash_password(
-            payload.password
-        ),
-
-        "created_at": datetime.now(
-            timezone.utc
-        ).isoformat(),
-    }
-
-    await db.users.insert_one(
-        user_doc
-    )
-
-    # ---------------------------------------------
-    # Delete verification record
-    # ---------------------------------------------
-
-    await db.email_verifications.delete_one({
-        "email": email
-    })
-
-    # ---------------------------------------------
-    # Login user automatically
-    # ---------------------------------------------
-
-    token = create_access_token(
-        user_doc["id"],
-        email
-    )
-
-    set_auth_cookie(
-        response,
-        token
-    )
-
-    return {
-        "user": public_user(user_doc),
-        "token": token
-    }
-
-# =====================================================
-# RESEND VERIFICATION CODE
-# =====================================================
-
-@router.post("/register/resend")
-async def resend_verification(
-    payload: RequestVerificationInput
-):
-    email = payload.email.lower().strip()
-
-    existing = await db.users.find_one({
-        "email": email
-    })
-
-    if existing:
-        raise HTTPException(
-            status_code=400,
-            detail="Email already registered"
-        )
-
-    verification = await db.email_verifications.find_one({
-        "email": email
-    })
-
-    if not verification:
-        raise HTTPException(
-            status_code=400,
-            detail="No verification request found"
-        )
-
-    # ---------------------------------------------
-    # Generate new OTP
-    # ---------------------------------------------
-
-    otp = generate_otp()
-
-    otp_hash = hash_otp(otp)
-
-    expires_at = (
-        datetime.now(timezone.utc)
-        + timedelta(minutes=10)
-    )
-
-    await db.email_verifications.update_one(
-        {
-            "email": email
-        },
-        {
-            "$set": {
-                "otp_hash": otp_hash,
-                "expires_at": expires_at,
-                "attempts": 0,
-                "verified": False
-            },
-            "$unset": {
-                "verification_token_hash": ""
-            }
-        }
-    )
-
-    # ---------------------------------------------
-    # Send email
-    # ---------------------------------------------
-
-    try:
-
-        send_verification_email(
-            email,
-            otp
-        )
-
-    except Exception as e:
-
-        print(
-            "Email sending error:",
-            str(e)
-        )
-
-        raise HTTPException(
-            status_code=500,
-            detail="Could not send verification email"
-        )
-
-    return {
-        "success": True,
-        "message": "New verification code sent"
-    }
-
-    email = payload.email.lower().strip()
-
-    if len(payload.password) < 6:
-        raise HTTPException(
-            status_code=400,
-            detail="Password must be at least 6 characters"
-        )
-
-    existing = await db.users.find_one({
-        "email": email
-    })
-
-    if existing:
-        raise HTTPException(
-            status_code=400,
-            detail="Email already registered"
-        )
-
-    user_doc = {
-        "id": str(uuid.uuid4()),
-        "name": payload.name.strip(),
-        "email": email,
-        "phone": payload.phone.strip(),
-        "password_hash": hash_password(payload.password),
-        "created_at": datetime.now(timezone.utc).isoformat(),
-    }
-
-    await db.users.insert_one(user_doc)
-
-    await db.email_verifications.delete_one({
-    "email": email
-})
-
-    token = create_access_token(
-        user_doc["id"],
-        email
-    )
-
-    set_auth_cookie(response, token)
-
-    return {
-        "user": public_user(user_doc),
-        "token": token
-    }
-
-
-# =====================================================
-# LOGIN
-# =====================================================
 
 @router.post("/login")
 async def login(
@@ -845,6 +351,92 @@ async def google_login(
     await db.users.insert_one(
         user_doc
     )
+
+    token = create_access_token(
+        user_doc["id"],
+        email
+    )
+
+    set_auth_cookie(
+        response,
+        token
+    )
+
+    return {
+        "user": public_user(user_doc),
+        "token": token
+    }
+
+# =====================================================
+# MANUAL REGISTER
+# =====================================================
+
+@router.post("/register")
+async def register(
+    payload: RegisterInput,
+    response: Response
+):
+    email = payload.email.lower().strip()
+
+    # -------------------------------------------------
+    # CHECK EXISTING USER
+    # -------------------------------------------------
+
+    existing = await db.users.find_one({
+        "email": email
+    })
+
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail="Email already registered"
+        )
+
+    # -------------------------------------------------
+    # VALIDATE PASSWORD
+    # -------------------------------------------------
+
+    if len(payload.password) < 6:
+        raise HTTPException(
+            status_code=400,
+            detail="Password must be at least 6 characters"
+        )
+
+    # -------------------------------------------------
+    # CREATE USER
+    # -------------------------------------------------
+
+    user_doc = {
+        "id": str(uuid.uuid4()),
+
+        "name": payload.name.strip(),
+
+        "email": email,
+
+        "phone": (
+            payload.phone.strip()
+            if payload.phone
+            else ""
+        ),
+
+        "password_hash": hash_password(
+            payload.password
+        ),
+
+        "auth_provider": "local",
+
+        "created_at": datetime.now(
+            timezone.utc
+        ).isoformat(),
+    }
+
+    await db.users.insert_one(
+        user_doc
+    )
+
+    # -------------------------------------------------
+    # AUTO LOGIN
+    # -------------------------------------------------
 
     token = create_access_token(
         user_doc["id"],

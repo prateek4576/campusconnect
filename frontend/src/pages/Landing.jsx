@@ -1,4 +1,4 @@
-import { Link, Navigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Footer from "../components/Footer";
 
@@ -13,10 +13,7 @@ import {
 } from "lucide-react";
 
 export default function Landing() {
-  const { user, loading } = useAuth();
-  const [showDeveloper, setShowDeveloper] = useState(false);
-  if (loading) return null;
-  if (user) return <Navigate to="/dashboard" replace />;
+ const [showDeveloper, setShowDeveloper] = useState(false);
 
   const faqs = [
     {

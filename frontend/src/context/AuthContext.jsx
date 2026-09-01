@@ -76,84 +76,9 @@ export function AuthProvider({ children }) {
     return data.user;
   }
 
-  // =====================================================
-  // STEP 1: REQUEST REGISTRATION
-  // =====================================================
 
-  async function requestRegistration(payload) {
-    const { data } = await api.post(
-      "/auth/register/request",
-      {
-        name: payload.name,
-        email: payload.email,
-        phone: payload.phone,
-      }
-    );
 
-    return data;
-  }
 
-  // =====================================================
-  // STEP 2: VERIFY EMAIL
-  // =====================================================
-
-  async function verifyEmail(email, otp) {
-    const { data } = await api.post(
-      "/auth/verify-email",
-      {
-        email,
-        otp,
-      }
-    );
-
-    return data;
-  }
-
-  // =====================================================
-  // STEP 3: COMPLETE REGISTRATION
-  // =====================================================
-
-  async function completeRegistration(payload) {
-    const { data } = await api.post(
-      "/auth/register/complete",
-      {
-        name: payload.name,
-        email: payload.email,
-        phone: payload.phone,
-        password: payload.password,
-        verification_token:
-          payload.verification_token,
-      }
-    );
-
-    if (data.token) {
-      localStorage.setItem(
-        "cc_token",
-        data.token
-      );
-    }
-
-    setUser(data.user);
-
-    return data.user;
-  }
-
-  // =====================================================
-  // RESEND VERIFICATION CODE
-  // =====================================================
-
-  async function resendVerification(payload) {
-    const { data } = await api.post(
-      "/auth/register/resend",
-      {
-        name: payload.name,
-        email: payload.email,
-        phone: payload.phone,
-      }
-    );
-
-    return data;
-  }
 
   // =====================================================
   // LOGOUT
@@ -201,4 +126,32 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   return useContext(AuthContext);
+}
+
+
+// =====================================================
+// MANUAL REGISTER
+// =====================================================
+
+async function register(name, email, phone, password) {
+  const { data } = await api.post(
+    "/auth/register",
+    {
+      name,
+      email,
+      phone: phone || "",
+      password,
+    }
+  );
+
+  if (data.token) {
+    localStorage.setItem(
+      "cc_token",
+      data.token
+    );
+  }
+
+  setUser(data.user);
+
+  return data.user;
 }
