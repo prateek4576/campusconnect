@@ -18,16 +18,21 @@ export function AuthProvider({ children }) {
   // FETCH CURRENT USER
   // =====================================================
 
-  const fetchMe = useCallback(async () => {
-    try {
-      const { data } = await api.get("/auth/me");
-      setUser(data);
-    } catch {
+const fetchMe = useCallback(async () => {
+  try {
+    const { data } = await api.get("/auth/me");
+    setUser(data);
+  } catch {
+    // Don't overwrite a newly authenticated user
+    // if login/register happened while this request
+    // was still in progress.
+    if (!localStorage.getItem("cc_token")) {
       setUser(false);
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
   useEffect(() => {
     fetchMe();
