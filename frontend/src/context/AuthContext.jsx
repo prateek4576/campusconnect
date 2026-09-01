@@ -53,16 +53,42 @@ export function AuthProvider({ children }) {
   }
 
   // =====================================================
+  // GOOGLE LOGIN / SIGNUP
+  // =====================================================
+
+  async function googleLogin(credential) {
+    const { data } = await api.post(
+      "/auth/google",
+      {
+        credential,
+      }
+    );
+
+    if (data.token) {
+      localStorage.setItem(
+        "cc_token",
+        data.token
+      );
+    }
+
+    setUser(data.user);
+
+    return data.user;
+  }
+
+  // =====================================================
   // STEP 1: REQUEST REGISTRATION
-  // Sends verification code to email
   // =====================================================
 
   async function requestRegistration(payload) {
-    const { data } = await api.post("/auth/register/request", {
-      name: payload.name,
-      email: payload.email,
-      phone: payload.phone,
-    });
+    const { data } = await api.post(
+      "/auth/register/request",
+      {
+        name: payload.name,
+        email: payload.email,
+        phone: payload.phone,
+      }
+    );
 
     return data;
   }
@@ -72,30 +98,39 @@ export function AuthProvider({ children }) {
   // =====================================================
 
   async function verifyEmail(email, otp) {
-    const { data } = await api.post("/auth/verify-email", {
-      email,
-      otp,
-    });
+    const { data } = await api.post(
+      "/auth/verify-email",
+      {
+        email,
+        otp,
+      }
+    );
 
     return data;
   }
 
   // =====================================================
   // STEP 3: COMPLETE REGISTRATION
-  // Creates the actual user account
   // =====================================================
 
   async function completeRegistration(payload) {
-    const { data } = await api.post("/auth/register/complete", {
-      name: payload.name,
-      email: payload.email,
-      phone: payload.phone,
-      password: payload.password,
-      verification_token: payload.verification_token,
-    });
+    const { data } = await api.post(
+      "/auth/register/complete",
+      {
+        name: payload.name,
+        email: payload.email,
+        phone: payload.phone,
+        password: payload.password,
+        verification_token:
+          payload.verification_token,
+      }
+    );
 
     if (data.token) {
-      localStorage.setItem("cc_token", data.token);
+      localStorage.setItem(
+        "cc_token",
+        data.token
+      );
     }
 
     setUser(data.user);
@@ -108,11 +143,14 @@ export function AuthProvider({ children }) {
   // =====================================================
 
   async function resendVerification(payload) {
-    const { data } = await api.post("/auth/register/resend", {
-      name: payload.name,
-      email: payload.email,
-      phone: payload.phone,
-    });
+    const { data } = await api.post(
+      "/auth/register/resend",
+      {
+        name: payload.name,
+        email: payload.email,
+        phone: payload.phone,
+      }
+    );
 
     return data;
   }
@@ -141,46 +179,21 @@ export function AuthProvider({ children }) {
         user,
         loading,
 
-        // Normal authentication
         login,
+        googleLogin,
 
-        // Email verification registration
         requestRegistration,
         verifyEmail,
         completeRegistration,
         resendVerification,
 
-        // Logout
         logout,
 
-        // Refresh current user
         refresh: fetchMe,
 
-        // Error formatter
         formatApiErrorDetail,
       }}
     >
-      <AuthContext.Provider
-        value={{
-          user,
-          loading,
-
-          login,
-
-          googleLogin,
-
-          requestRegistration,
-          verifyEmail,
-          completeRegistration,
-          resendVerification,
-
-          logout,
-
-          refresh: fetchMe,
-
-          formatApiErrorDetail,
-        }}
-      ></AuthContext.Provider>
       {children}
     </AuthContext.Provider>
   );
@@ -188,22 +201,4 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   return useContext(AuthContext);
-}
-
-// =====================================================
-// GOOGLE LOGIN / SIGNUP
-// =====================================================
-
-async function googleLogin(credential) {
-  const { data } = await api.post("/auth/google", {
-    credential,
-  });
-
-  if (data.token) {
-    localStorage.setItem("cc_token", data.token);
-  }
-
-  setUser(data.user);
-
-  return data.user;
 }
