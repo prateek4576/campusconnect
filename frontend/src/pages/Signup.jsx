@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../lib/api";
@@ -9,10 +9,12 @@ export default function Signup() {
     verifyEmail,
     completeRegistration,
     resendVerification,
+    googleLogin,
     formatApiErrorDetail,
   } = useAuth();
 
   const nav = useNavigate();
+  const googleButtonRef = useRef(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -36,6 +38,105 @@ export default function Signup() {
       ...previous,
       [key]: value,
     }));
+  };
+
+  const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+
+  useEffect(() => {
+    if (step !== "details") {
+      return;
+    }
+
+    const renderGoogleButton = () => {
+      if (!window.google || !googleButtonRef.current) {
+        return;
+      }
+
+      googleButtonRef.current.innerHTML = "";
+
+      window.google.accounts.id.initialize({
+        client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+
+        callback: async (response) => {
+          setError("");
+          setBusy(true);
+
+          try {
+            await googleLogin(response.credential);
+
+            nav("/dashboard");
+          } catch (e) {
+            setError(
+              formatApiErrorDetail(e.response?.data?.detail) ||
+                "Google signup failed",
+            );
+          } finally {
+            setBusy(false);
+          }
+        },
+      });
+
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: "outline",
+        size: "large",
+        width: "100%",
+        text: "continue_with",
+        shape: "rectangular",
+      });
+    };
+
+    if (window.google) {
+      renderGoogleButton();
+    } else {
+      const interval = setInterval(() => {
+        if (window.google) {
+          clearInterval(interval);
+
+          renderGoogleButton();
+        }
+      }, 100);
+
+      return () => {
+        clearInterval(interval);
+      };
+    }
+  }, [step, googleLogin, nav, formatApiErrorDetail]);
+
+  const handleGoogleLogin = () => {
+    if (!window.google) {
+      setError("Google Sign-In is not available. Please try again.");
+      return;
+    }
+
+    if (!googleClientId) {
+      setError("Google authentication is not configured.");
+      return;
+    }
+
+    window.google.accounts.id.initialize({
+      client_id: googleClientId,
+
+      callback: async (response) => {
+        setError("");
+        setBusy(true);
+
+        try {
+          await googleLogin(response.credential);
+
+          nav("/dashboard");
+        } catch (e) {
+          setError(
+            formatApiErrorDetail(e.response?.data?.detail) ||
+              e.message ||
+              "Google sign-in failed",
+          );
+        } finally {
+          setBusy(false);
+        }
+      },
+    });
+
+    window.google.accounts.id.prompt();
   };
 
   // =====================================================
@@ -326,7 +427,6 @@ export default function Signup() {
                       onChange={(e) => set("email", e.target.value)}
                       placeholder="you@gmail.com"
                       className="w-full border-2 border-black bg-white px-3 py-2 brutal-shadow-sm"
-                     
                     />
                     {emailVerified && (
                       <p className="text-[#2A9D8F] font-bold text-sm mt-2">
@@ -346,7 +446,7 @@ export default function Signup() {
                       required
                       value={form.phone}
                       onChange={(e) => set("phone", e.target.value)}
-                       placeholder="Enter your phone number"
+                      placeholder="Enter your phone number"
                       className="w-full border-2 border-black bg-white px-3 py-2 brutal-shadow-sm"
                     />
                   </div>
@@ -368,6 +468,24 @@ export default function Signup() {
                   >
                     {busy ? "Sending Code…" : "Continue"}
                   </button>
+
+                  <div className="flex items-center gap-3 my-4">
+                    <div className="h-px bg-black flex-1" />
+
+                    <span className="text-xs font-bold uppercase">OR</span>
+
+                    <div className="h-px bg-black flex-1" />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleGoogleLogin}
+                    disabled={busy}
+                    className="w-full bg-white text-black border-2 border-black px-4 py-3 brutal-shadow brutal-press font-bold uppercase disabled:opacity-60 flex items-center justify-center gap-3"
+                  >
+                    <span className="text-lg font-bold">G</span>
+                    Continue with Google
+                  </button>
                 </form>
 
                 <p className="mt-6 text-sm">
@@ -380,77 +498,66 @@ export default function Signup() {
             )}
 
             {/* ================================================= */}
-{/* STEP 2 - VERIFY EMAIL */}
-{/* ================================================= */}
+            {/* STEP 2 - VERIFY EMAIL */}
+            {/* ================================================= */}
 
-{step === "verify" && (
-  <form onSubmit={handleVerifyEmail} className="space-y-4">
+            {step === "verify" && (
+              <form onSubmit={handleVerifyEmail} className="space-y-4">
+                <h1 className="font-display font-black text-3xl uppercase mb-2">
+                  Verify Your Email
+                </h1>
 
-    <h1 className="font-display font-black text-3xl uppercase mb-2">
-      Verify Your Email
-    </h1>
+                <p className="text-sm">We sent a verification code to</p>
 
-    <p className="text-sm">
-      We sent a verification code to
-    </p>
+                <p className="font-bold mb-6">{maskedEmail}</p>
 
-    <p className="font-bold mb-6">
-      {maskedEmail}
-    </p>
+                <div>
+                  <label className="block font-bold uppercase text-xs mb-1 tracking-widest">
+                    Verification Code
+                  </label>
 
-    <div>
-      <label className="block font-bold uppercase text-xs mb-1 tracking-widest">
-        Verification Code
-      </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    required
+                    value={otp}
+                    onChange={(e) =>
+                      setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                    }
+                    placeholder="------"
+                    className="w-full border-2 border-black bg-white px-3 py-3 brutal-shadow-sm text-center text-2xl tracking-[0.4em] font-bold"
+                  />
+                </div>
 
-      <input
-        type="text"
-        inputMode="numeric"
-        autoComplete="one-time-code"
-        maxLength={6}
-        required
-        value={otp}
-        onChange={(e) =>
-          setOtp(
-            e.target.value
-              .replace(/\D/g, "")
-              .slice(0, 6)
-          )
-        }
-        placeholder="------"
-        className="w-full border-2 border-black bg-white px-3 py-3 brutal-shadow-sm text-center text-2xl tracking-[0.4em] font-bold"
-      />
-    </div>
+                {error && (
+                  <div className="bg-[#E63946] text-white border-2 border-black px-3 py-2 text-sm font-semibold">
+                    {error}
+                  </div>
+                )}
 
-    {error && (
-      <div className="bg-[#E63946] text-white border-2 border-black px-3 py-2 text-sm font-semibold">
-        {error}
-      </div>
-    )}
+                <button
+                  type="submit"
+                  disabled={busy || otp.length !== 6}
+                  className="w-full bg-black text-white border-2 border-black px-4 py-3 brutal-shadow brutal-press font-bold uppercase disabled:opacity-60"
+                >
+                  {busy ? "Verifying…" : "Verify Email"}
+                </button>
 
-    <button
-      type="submit"
-      disabled={busy || otp.length !== 6}
-      className="w-full bg-black text-white border-2 border-black px-4 py-3 brutal-shadow brutal-press font-bold uppercase disabled:opacity-60"
-    >
-      {busy ? "Verifying…" : "Verify Email"}
-    </button>
-
-    <p className="text-sm text-center pt-2">
-      Didn't receive it?{" "}
-
-      <button
-        type="button"
-        onClick={handleResend}
-        disabled={resending}
-        className="font-bold underline disabled:opacity-50"
-      >
-        {resending ? "Sending..." : "Resend Code"}
-      </button>
-    </p>
-
-  </form>
-)}
+                <p className="text-sm text-center pt-2">
+                  Didn't receive it?{" "}
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={resending}
+                    className="font-bold underline disabled:opacity-50"
+                  >
+                    {resending ? "Sending..." : "Resend Code"}
+                  </button>
+                </p>
+              </form>
+            )}
 
             {/* ================================================= */}
             {/* STEP 3 - SUCCESS */}

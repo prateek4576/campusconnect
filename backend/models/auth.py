@@ -73,3 +73,10 @@ class RegisterInput(BaseModel):
     email: EmailStr
     phone: str
     password: str
+
+    # =====================================================
+# GOOGLE AUTHENTICATION
+# =====================================================
+
+class GoogleLoginInput(BaseModel):
+    credential: str

@@ -2,7 +2,23 @@ import uuid
 import secrets
 import hashlib
 import random
+import os
 from datetime import datetime, timezone, timedelta
+
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+
+from models.auth import (
+    RegisterInput,
+    LoginInput,
+    AdminLoginInput,
+    AdminUserUpdate,
+    UserProfileUpdate,
+    RequestVerificationInput,
+    VerifyEmailInput,
+    CompleteRegistrationInput,
+    GoogleLoginInput,
+)
 
 from utils.email import send_verification_email
 
@@ -566,10 +582,22 @@ async def login(
         "email": email
     })
 
-    if not user or not verify_password(
+    if not user:
+        raise HTTPException(
+        status_code=401,
+        detail="Invalid email or password"
+    )
+
+    password_hash = user.get("password_hash")
+
+    if not password_hash or not verify_password(
         payload.password,
-        user["password_hash"]
+        password_hash
     ):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password"
+        )
         raise HTTPException(
             status_code=401,
             detail="Invalid email or password"
@@ -677,3 +705,158 @@ async def update_profile(
     )
 
     return updated_user
+
+# =====================================================
+# GOOGLE LOGIN / SIGNUP
+# =====================================================
+
+@router.post("/google")
+async def google_login(
+    payload: GoogleLoginInput,
+    response: Response
+):
+
+    google_client_id = os.environ.get(
+        "GOOGLE_CLIENT_ID"
+    )
+
+    if not google_client_id:
+        raise HTTPException(
+            status_code=500,
+            detail="Google authentication is not configured"
+        )
+
+    try:
+
+        # Verify Google's ID token
+        google_user = id_token.verify_oauth2_token(
+            payload.credential,
+            google_requests.Request(),
+            google_client_id
+        )
+
+    except ValueError:
+
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid Google credential"
+        )
+
+    # -------------------------------------------------
+    # Get verified Google information
+    # -------------------------------------------------
+
+    google_id = google_user.get("sub")
+    email = google_user.get("email")
+    name = google_user.get("name")
+
+    email_verified = google_user.get(
+        "email_verified",
+        False
+    )
+
+    if not google_id or not email:
+        raise HTTPException(
+            status_code=400,
+            detail="Google account information is incomplete"
+        )
+
+    if not email_verified:
+        raise HTTPException(
+            status_code=400,
+            detail="Google email is not verified"
+        )
+
+    email = email.lower().strip()
+
+    # -------------------------------------------------
+    # Check existing user
+    # -------------------------------------------------
+
+    existing_user = await db.users.find_one({
+        "email": email
+    })
+
+    # -------------------------------------------------
+    # EXISTING USER
+    # -------------------------------------------------
+
+    if existing_user:
+
+        # Save Google ID if this account
+        # has not previously been linked.
+        if not existing_user.get("google_id"):
+
+            await db.users.update_one(
+                {
+                    "id": existing_user["id"]
+                },
+                {
+                    "$set": {
+                        "google_id": google_id,
+                        "auth_provider": "google"
+                    }
+                }
+            )
+
+            existing_user["google_id"] = google_id
+            existing_user["auth_provider"] = "google"
+
+        token = create_access_token(
+            existing_user["id"],
+            existing_user["email"]
+        )
+
+        set_auth_cookie(
+            response,
+            token
+        )
+
+        return {
+            "user": public_user(existing_user),
+            "token": token
+        }
+
+    # -------------------------------------------------
+    # NEW USER
+    # -------------------------------------------------
+
+    user_doc = {
+        "id": str(uuid.uuid4()),
+
+        "name": name or "Google User",
+
+        "email": email,
+
+        # Google does not provide the phone
+        # number we use in CampusConnect.
+        "phone": "",
+
+        # No password for Google accounts
+        "auth_provider": "google",
+
+        "google_id": google_id,
+
+        "created_at": datetime.now(
+            timezone.utc
+        ).isoformat(),
+    }
+
+    await db.users.insert_one(
+        user_doc
+    )
+
+    token = create_access_token(
+        user_doc["id"],
+        email
+    )
+
+    set_auth_cookie(
+        response,
+        token
+    )
+
+    return {
+        "user": public_user(user_doc),
+        "token": token
+    }
