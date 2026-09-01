@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+
 import Footer from "../components/Footer";
 
 import { useState } from "react";
@@ -8,7 +8,6 @@ import {
   Search,
   PackageOpen,
   Users,
-  ShieldCheck,
   ChevronDown,
 } from "lucide-react";
 

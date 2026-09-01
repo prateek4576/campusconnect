@@ -53,6 +53,38 @@ export function AuthProvider({ children }) {
   }
 
   // =====================================================
+  // MANUAL REGISTER
+  // =====================================================
+
+  async function register(
+    name,
+    email,
+    phone,
+    password
+  ) {
+    const { data } = await api.post(
+      "/auth/register",
+      {
+        name,
+        email,
+        phone: phone || "",
+        password,
+      }
+    );
+
+    if (data.token) {
+      localStorage.setItem(
+        "cc_token",
+        data.token
+      );
+    }
+
+    setUser(data.user);
+
+    return data.user;
+  }
+
+  // =====================================================
   // GOOGLE LOGIN / SIGNUP
   // =====================================================
 
@@ -75,10 +107,6 @@ export function AuthProvider({ children }) {
 
     return data.user;
   }
-
-
-
-
 
   // =====================================================
   // LOGOUT
@@ -105,12 +133,8 @@ export function AuthProvider({ children }) {
         loading,
 
         login,
+        register,
         googleLogin,
-
-        requestRegistration,
-        verifyEmail,
-        completeRegistration,
-        resendVerification,
 
         logout,
 
@@ -126,32 +150,4 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   return useContext(AuthContext);
-}
-
-
-// =====================================================
-// MANUAL REGISTER
-// =====================================================
-
-async function register(name, email, phone, password) {
-  const { data } = await api.post(
-    "/auth/register",
-    {
-      name,
-      email,
-      phone: phone || "",
-      password,
-    }
-  );
-
-  if (data.token) {
-    localStorage.setItem(
-      "cc_token",
-      data.token
-    );
-  }
-
-  setUser(data.user);
-
-  return data.user;
 }
