@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -6,7 +6,6 @@ export default function Signup() {
   const { register, googleLogin, formatApiErrorDetail } = useAuth();
 
   const nav = useNavigate();
-  const googleButtonRef = useRef(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -25,65 +24,47 @@ export default function Signup() {
     }));
   };
 
-  useEffect(() => {
-    if (!window.google || !googleButtonRef.current) {
+  // =====================================================
+  // GOOGLE LOGIN / SIGNUP
+  // =====================================================
+
+  const handleGoogleLogin = () => {
+    if (!window.google) {
+      setError("Google Sign-In is not available. Please try again.");
       return;
     }
 
-    const renderGoogleButton = () => {
-      if (!window.google || !googleButtonRef.current) {
-        return;
-      }
+    const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
-      googleButtonRef.current.innerHTML = "";
-
-      window.google.accounts.id.initialize({
-        client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
-
-        callback: async (response) => {
-          setError("");
-          setBusy(true);
-
-          try {
-            await googleLogin(response.credential);
-
-            nav("/dashboard");
-          } catch (e) {
-            setError(
-              formatApiErrorDetail(e.response?.data?.detail) ||
-                "Google signup failed",
-            );
-          } finally {
-            setBusy(false);
-          }
-        },
-      });
-
-      window.google.accounts.id.renderButton(googleButtonRef.current, {
-        theme: "outline",
-        size: "large",
-        width: "100%",
-        text: "continue_with",
-        shape: "rectangular",
-      });
-    };
-
-    if (window.google) {
-      renderGoogleButton();
-    } else {
-      const interval = setInterval(() => {
-        if (window.google) {
-          clearInterval(interval);
-
-          renderGoogleButton();
-        }
-      }, 100);
-
-      return () => {
-        clearInterval(interval);
-      };
+    if (!googleClientId) {
+      setError("Google authentication is not configured.");
+      return;
     }
-  }, [ googleLogin, nav, formatApiErrorDetail]);
+
+    window.google.accounts.id.initialize({
+      client_id: googleClientId,
+
+      callback: async (response) => {
+        setError("");
+        setBusy(true);
+
+        try {
+          await googleLogin(response.credential);
+
+          nav("/dashboard");
+        } catch (e) {
+          setError(
+            formatApiErrorDetail(e.response?.data?.detail) ||
+              "Google sign-in failed",
+          );
+        } finally {
+          setBusy(false);
+        }
+      },
+    });
+
+    window.google.accounts.id.prompt();
+  };
 
   // =====================================================
   // FINAL SIGNUP
@@ -96,6 +77,10 @@ export default function Signup() {
     setBusy(true);
 
     try {
+      // =====================================================
+      // MANUAL SIGNUP
+      // =====================================================
+
       const submit = async (e) => {
         e.preventDefault();
 
@@ -315,7 +300,24 @@ export default function Signup() {
                     placeholder="you@gmail.com"
                     className="w-full border-2 border-black bg-white px-3 py-2 brutal-shadow-sm"
                   />
-               
+                </div>
+
+                {/* PASSWORD */}
+
+                <div>
+                  <label className="block font-bold uppercase text-xs mb-1 tracking-widest">
+                    Password
+                  </label>
+
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    value={form.password}
+                    onChange={(e) => set("password", e.target.value)}
+                    placeholder="Create a password"
+                    className="w-full border-2 border-black bg-white px-3 py-2 brutal-shadow-sm"
+                  />
                 </div>
 
                 {/* PHONE */}
@@ -359,10 +361,15 @@ export default function Signup() {
                   <div className="h-px bg-black flex-1" />
                 </div>
 
-                <div
-                  ref={googleButtonRef}
-                  className="w-full flex justify-center"
-                />
+                <button
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  disabled={busy}
+                  className="w-full bg-white text-black border-2 border-black px-4 py-3 brutal-shadow brutal-press font-bold uppercase disabled:opacity-60 flex items-center justify-center gap-3"
+                >
+                  <span className="text-lg font-bold">G</span>
+                  Continue with Google
+                </button>
               </form>
 
               <p className="mt-6 text-sm">
@@ -372,30 +379,6 @@ export default function Signup() {
                 </Link>
               </p>
             </>
-
-            {/* ================================================= */}
-            {/* STEP 2 - VERIFY EMAIL */}
-            {/* ================================================= */}
-
-            {/* ================================================= */}
-            {/* STEP 3 - SUCCESS */}
-            {/* ================================================= */}
-
-            <div>
-              <label className="block font-bold uppercase text-xs mb-1 tracking-widest">
-                Password
-              </label>
-
-              <input
-                type="password"
-                required
-                minLength={6}
-                value={form.password}
-                onChange={(e) => set("password", e.target.value)}
-                placeholder="Create a password"
-                className="w-full border-2 border-black bg-white px-3 py-2 brutal-shadow-sm"
-              />
-            </div>
           </div>
         </div>
       </div>
