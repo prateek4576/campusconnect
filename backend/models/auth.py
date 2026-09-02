@@ -43,17 +43,7 @@ class UserProfileUpdate(BaseModel):
     phone: str
 
 
-# =====================================================
-# OLD REGISTER MODEL
-# =====================================================
-# Keep this only if another part of your backend
-# still imports RegisterInput.
 
-class RegisterInput(BaseModel):
-    name: str
-    email: EmailStr
-    phone: str
-    password: str
 
 # =====================================================
 # MANUAL REGISTRATION

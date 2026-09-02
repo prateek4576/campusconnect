@@ -113,15 +113,6 @@ async def healthz():
 @app.on_event("startup")
 async def startup():
 
-    await db.email_verifications.create_index(
-    "email",
-    unique=True
-)
-
-    await db.email_verifications.create_index(
-    "expires_at",
-    expireAfterSeconds=0
-)
 
     try:
 

@@ -70,49 +70,37 @@ export default function Signup() {
   // FINAL SIGNUP
   // =====================================================
 
-  const submit = async (e) => {
-    e.preventDefault();
+ // =====================================================
+// MANUAL SIGNUP
+// =====================================================
 
-    setError("");
-    setBusy(true);
+const submit = async (e) => {
+  e.preventDefault();
 
-    try {
-      // =====================================================
-      // MANUAL SIGNUP
-      // =====================================================
+  setError("");
+  setBusy(true);
 
-      const submit = async (e) => {
-        e.preventDefault();
+  try {
+    await register(
+      form.name,
+      form.email,
+      form.phone,
+      form.password
+    );
 
-        setError("");
-        setBusy(true);
-
-        try {
-          await register(form.name, form.email, form.phone, form.password);
-
-          nav("/dashboard");
-        } catch (e) {
-          setError(
-            formatApiErrorDetail(e.response?.data?.detail) ||
-              e.message ||
-              "Signup failed",
-          );
-        } finally {
-          setBusy(false);
-        }
-      };
-
-      nav("/dashboard");
-    } catch (e) {
-      setError(
-        formatApiErrorDetail(e.response?.data?.detail) ||
-          e.message ||
-          "Signup failed",
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
+    nav("/dashboard");
+  } catch (e) {
+    setError(
+      formatApiErrorDetail(
+        e.response?.data?.detail
+      ) ||
+      e.message ||
+      "Signup failed"
+    );
+  } finally {
+    setBusy(false);
+  }
+};
 
   // =====================================================
   // MASK EMAIL
