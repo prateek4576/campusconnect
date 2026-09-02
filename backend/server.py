@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+from utils.firebase import initialize_firebase
+
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
@@ -11,9 +13,14 @@ from utils.storage import init_storage
 from routes.auth import router as auth_router
 from routes.items import router as items_router
 from routes.messages import router as messages_router
+
+from routes.notifications import router as notifications_router
+
 from routes.files import router as files_router
 from routes.contact import router as contact_router
 from routes.admin import router as admin_router
+
+
 
 
 # =====================================================
@@ -33,6 +40,11 @@ app = FastAPI(
     title="CampusConnect API"
 )
 
+
+app.include_router(
+    notifications_router,
+    prefix="/api"
+)
 
 # =====================================================
 # CORS
@@ -115,6 +127,8 @@ async def startup():
 
 
     try:
+
+        initialize_firebase()
 
         # ---------------------------------------------
         # USERS

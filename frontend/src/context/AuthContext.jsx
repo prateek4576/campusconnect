@@ -6,6 +6,8 @@ import {
   useCallback,
 } from "react";
 
+import { setupPushNotifications } from "../lib/notifications";
+
 import api, { formatApiErrorDetail } from "../lib/api";
 
 const AuthContext = createContext(null);
@@ -54,6 +56,8 @@ const fetchMe = useCallback(async () => {
 
     setUser(data.user);
 
+    setupPushNotifications();
+
     return data.user;
   }
 
@@ -86,6 +90,8 @@ const fetchMe = useCallback(async () => {
 
     setUser(data.user);
 
+    setupPushNotifications();
+
     return data.user;
   }
 
@@ -109,6 +115,8 @@ const fetchMe = useCallback(async () => {
     }
 
     setUser(data.user);
+
+    setupPushNotifications();
 
     return data.user;
   }

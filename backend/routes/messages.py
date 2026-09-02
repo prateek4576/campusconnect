@@ -1,6 +1,8 @@
 import uuid
 from datetime import datetime, timezone
 
+from utils.firebase import send_push_notification
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -10,13 +12,15 @@ from fastapi import (
 from config.database import db
 from models.message import MessageInput
 from dependencies.auth import get_current_user
-from utils.email import send_new_message_email
+
 
 
 router = APIRouter(
     prefix="/messages",
     tags=["Messages"]
 )
+
+
 
 
 # =====================================================
@@ -221,52 +225,49 @@ async def send_message(
 
     await db.messages.insert_one(message_doc)
 
+    
 
-# =================================================
-# FIND RECEIVER EMAIL
-# =================================================
 
     receiver = await db.users.find_one(
-    {
-        "id": receiver_id
-    },
+    {"id": receiver_id},
     {
         "_id": 0,
-        "name": 1,
-        "email": 1
+        "fcm_installations": 1,
     }
 )
 
+    installations = (
+    receiver.get(
+        "fcm_installations",
+        []
+    )
+    if receiver
+    else []
+)
 
-# =================================================
-# SEND EMAIL NOTIFICATION
-# =================================================
-
-    if receiver and receiver.get("email"):
-
+    for installation_id in installations:
         try:
 
-            send_new_message_email(
-                recipient_email=receiver["email"],
-                recipient_name=receiver.get(
-                    "name",
-                    receiver_name
-                ),
-                sender_name=user["name"],
-                item_title=item.get(
-                    "title",
-                    "Item"
-                )
-            )
+            send_push_notification(
+            installation_id=installation_id,
+            title=(
+                f"{user['name']} "
+                f"sent you a message"
+            ),
+            body=message_text,
+            url="/messages",
+            conversation_id=conversation_id,
+        )
 
         except Exception as e:
 
-            # Email failure should NOT prevent
-            # the message from being sent.
-
             print(
-                f"Message email notification failed: {e}"
-            )
+            f"FCM notification failed: {e}"
+        )
+
+
+
+
 
 
 # =================================================
