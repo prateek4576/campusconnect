@@ -1,8 +1,7 @@
 import {
   getFirebaseMessaging,
-  registerMessaging,
-  onRegistered,
-  onUnregistered,
+  getToken,
+  onMessage,
 } from "./firebase";
 
 import api from "./api";
@@ -63,75 +62,43 @@ export async function setupPushNotifications() {
       return;
     }
 
-    onRegistered(
-      messaging,
-      async (installationId) => {
-        try {
-          console.log(
-            "FCM Installation ID:",
-            installationId
-          );
+    const token = await getToken(messaging, {
+      vapidKey:
+        process.env.REACT_APP_FIREBASE_VAPID_KEY,
+      serviceWorkerRegistration,
+    });
 
-          await api.post(
-            "/notifications/register",
-            {
-              installation_id:
-                installationId,
-            }
-          );
+    if (token) {
+      try {
+        await api.post(
+          "/notifications/register",
+          { installation_id: token }
+        );
 
-          console.log(
-            "FCM installation registered on server."
-          );
-        } catch (error) {
-          console.error(
-            "Failed to save FCM installation:",
-            error
-          );
-        }
+        console.log(
+          "FCM token registered on server."
+        );
+      } catch (error) {
+        console.error(
+          "Failed to save FCM token:",
+          error
+        );
       }
-    );
+    } else {
+      console.log(
+        "No registration token available."
+      );
+    }
 
-    onUnregistered(
-      messaging,
-      async (installationId) => {
-        try {
-          await api.delete(
-            "/notifications/register",
-            {
-              data: {
-                installation_id:
-                  installationId,
-              },
-            }
-          );
-
-          console.log(
-            "FCM installation removed from server."
-          );
-        } catch (error) {
-          console.error(
-            "Failed to remove FCM installation:",
-            error
-          );
-        }
-      }
-    );
-
-    await registerMessaging(
-      messaging,
-      {
-        vapidKey:
-          process.env
-            .REACT_APP_FIREBASE_VAPID_KEY,
-
-        serviceWorkerRegistration,
-      }
-    );
-
-    console.log(
-      "FCM registration completed."
-    );
+    onMessage(messaging, (payload) => {
+      console.log(
+        "Foreground message received:",
+        payload
+      );
+      // Optional: show an in-app toast/banner here.
+      // Background/closed-tab notifications are handled
+      // separately in firebase-messaging-sw.js.
+    });
   } catch (error) {
     console.error(
       "Push notification setup failed:",

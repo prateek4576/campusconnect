@@ -2,9 +2,8 @@ import { initializeApp } from "firebase/app";
 import {
   getMessaging,
   isSupported,
-  register as registerMessaging,
-  onRegistered,
-  onUnregistered,
+  getToken,
+  onMessage,
 } from "firebase/messaging";
 
 const firebaseConfig = {
@@ -31,7 +30,6 @@ export async function getFirebaseMessaging() {
 }
 
 export {
-  registerMessaging,
-  onRegistered,
-  onUnregistered,
+  getToken,
+  onMessage,
 };

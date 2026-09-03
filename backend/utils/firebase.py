@@ -36,21 +36,27 @@ def send_push_notification(
     title: str,
     body: str,
     url: str = "/messages",
+    conversation_id: str = None,
 ):
 
     initialize_firebase()
+
+    data = {
+        "title": title,
+        "body": body,
+        "url": url,
+    }
+
+    if conversation_id:
+        data["conversation_id"] = conversation_id
 
     message = messaging.Message(
         notification=messaging.Notification(
             title=title,
             body=body,
         ),
-        data={
-            "title": title,
-            "body": body,
-            "url": url,
-        },
-        fid=installation_id,
+        data=data,
+        token=installation_id,
     )
 
     return messaging.send(message)
