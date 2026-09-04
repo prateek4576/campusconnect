@@ -24,10 +24,8 @@ const fetchMe = useCallback(async () => {
   try {
     const { data } = await api.get("/auth/me");
     setUser(data);
+    setupPushNotifications();   // <-- ADD THIS LINE
   } catch {
-    // Don't overwrite a newly authenticated user
-    // if login/register happened while this request
-    // was still in progress.
     if (!localStorage.getItem("cc_token")) {
       setUser(false);
     }
