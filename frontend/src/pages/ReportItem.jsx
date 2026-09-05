@@ -121,6 +121,15 @@ async function compressImage(file) {
   }
 }
 
+function isNetworkError(error) {
+  return (
+    !navigator.onLine ||
+    !error.response ||
+    error.code === "ERR_NETWORK" ||
+    error.message === "Network Error"
+  );
+}
+
 export default function ReportItem({ type }) {
   const nav = useNavigate();
   const isLost = type === "lost";
@@ -200,7 +209,18 @@ export default function ReportItem({ type }) {
       await api.post(`/items/${type}`, { ...form, image_path });
       nav(`/items/${type}`);
     } catch (e) {
-      setError(formatApiErrorDetail(e.response?.data?.detail) || e.message);
+      console.error("Submit item error:", e);
+
+      if (isNetworkError(e)) {
+        setError(
+          "Network problem. Your post hasn't been submitted. Please try again.",
+        );
+      } else {
+        setError(
+          formatApiErrorDetail(e.response?.data?.detail) ||
+            "Could not submit your post. Please try again.",
+        );
+      }
     } finally {
       setBusy(false);
     }
