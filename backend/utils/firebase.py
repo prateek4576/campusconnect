@@ -1,10 +1,8 @@
+import json
 import os
 
 import firebase_admin
-from firebase_admin import (
-    credentials,
-    messaging,
-)
+from firebase_admin import credentials, messaging
 
 
 def initialize_firebase():
@@ -12,19 +10,42 @@ def initialize_firebase():
     if firebase_admin._apps:
         return
 
-    credentials_path = os.environ.get(
-        "GOOGLE_APPLICATION_CREDENTIALS"
+    # ---------------------------------------------
+    # Render: service account stored as JSON string
+    # ---------------------------------------------
+
+    service_account_json = os.environ.get(
+        "FIREBASE_SERVICE_ACCOUNT_JSON"
     )
 
-    if not credentials_path:
-        raise RuntimeError(
-            "GOOGLE_APPLICATION_CREDENTIALS "
-            "is not configured"
+    if service_account_json:
+
+        service_account_info = json.loads(
+            service_account_json
         )
 
-    cred = credentials.Certificate(
-        credentials_path
-    )
+        cred = credentials.Certificate(
+            service_account_info
+        )
+
+    else:
+
+        # -----------------------------------------
+        # Local development: JSON file path
+        # -----------------------------------------
+
+        credentials_path = os.environ.get(
+            "GOOGLE_APPLICATION_CREDENTIALS"
+        )
+
+        if not credentials_path:
+            raise RuntimeError(
+                "Firebase credentials are not configured"
+            )
+
+        cred = credentials.Certificate(
+            credentials_path
+        )
 
     firebase_admin.initialize_app(
         cred
@@ -36,7 +57,7 @@ def send_push_notification(
     title: str,
     body: str,
     url: str = "/messages",
-    conversation_id: str = None,
+    conversation_id: str | None = None,
 ):
 
     initialize_firebase()
@@ -59,4 +80,6 @@ def send_push_notification(
         token=installation_id,
     )
 
-    return messaging.send(message)
+    return messaging.send(
+        message
+    )

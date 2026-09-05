@@ -20,19 +20,19 @@ export function AuthProvider({ children }) {
   // FETCH CURRENT USER
   // =====================================================
 
-const fetchMe = useCallback(async () => {
-  try {
-    const { data } = await api.get("/auth/me");
-    setUser(data);
-    setupPushNotifications();   // <-- ADD THIS LINE
-  } catch {
-    if (!localStorage.getItem("cc_token")) {
-      setUser(false);
+  const fetchMe = useCallback(async () => {
+    try {
+      const { data } = await api.get("/auth/me");
+      setUser(data);
+      setupPushNotifications(); // <-- ADD THIS LINE
+    } catch {
+      if (!localStorage.getItem("cc_token")) {
+        setUser(false);
+      }
+    } finally {
+      setLoading(false);
     }
-  } finally {
-    setLoading(false);
-  }
-}, []);
+  }, []);
 
   useEffect(() => {
     fetchMe();
@@ -54,7 +54,7 @@ const fetchMe = useCallback(async () => {
 
     setUser(data.user);
 
-    setupPushNotifications();
+    await setupPushNotifications();
 
     return data.user;
   }
@@ -63,32 +63,21 @@ const fetchMe = useCallback(async () => {
   // MANUAL REGISTER
   // =====================================================
 
-  async function register(
-    name,
-    email,
-    phone,
-    password
-  ) {
-    const { data } = await api.post(
-      "/auth/register",
-      {
-        name,
-        email,
-        phone: phone || "",
-        password,
-      }
-    );
+  async function register(name, email, phone, password) {
+    const { data } = await api.post("/auth/register", {
+      name,
+      email,
+      phone: phone || "",
+      password,
+    });
 
     if (data.token) {
-      localStorage.setItem(
-        "cc_token",
-        data.token
-      );
+      localStorage.setItem("cc_token", data.token);
     }
 
     setUser(data.user);
 
-    setupPushNotifications();
+    await setupPushNotifications();
 
     return data.user;
   }
@@ -98,23 +87,17 @@ const fetchMe = useCallback(async () => {
   // =====================================================
 
   async function googleLogin(credential) {
-    const { data } = await api.post(
-      "/auth/google",
-      {
-        credential,
-      }
-    );
+    const { data } = await api.post("/auth/google", {
+      credential,
+    });
 
     if (data.token) {
-      localStorage.setItem(
-        "cc_token",
-        data.token
-      );
+      localStorage.setItem("cc_token", data.token);
     }
 
     setUser(data.user);
 
-    setupPushNotifications();
+    await setupPushNotifications();
 
     return data.user;
   }
