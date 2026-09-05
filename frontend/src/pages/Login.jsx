@@ -30,6 +30,13 @@ export default function Login() {
     window.google.accounts.id.initialize({
       client_id: googleClientId,
 
+      // Remember the previously used Google account.
+      login_hint: localStorage.getItem("cc_google_email") || undefined,
+
+      // Automatically select a returning Google session when
+      // the browser/Google session allows it.
+      auto_select: true,
+
       callback: async (response) => {
         setBusy(true);
         setError("");
@@ -37,7 +44,7 @@ export default function Login() {
         try {
           await googleLogin(response.credential);
 
-          nav("/dashboard");
+          nav("/dashboard", { replace: true });
         } catch (e) {
           setError(
             formatApiErrorDetail(e.response?.data?.detail) ||
@@ -72,7 +79,9 @@ export default function Login() {
         localStorage.setItem("cc_admin_token", data.token);
 
         // Go to admin dashboard
-        nav("/admin/dashboard");
+        nav("/admin/dashboard", {
+  replace: true,
+});
 
         return;
       }
@@ -82,7 +91,9 @@ export default function Login() {
       // ==========================================
       await login(email, password);
 
-      nav("/dashboard");
+      nav("/dashboard", {
+        replace: true,
+      });
     } catch (e) {
       setError(
         formatApiErrorDetail(e.response?.data?.detail) ||

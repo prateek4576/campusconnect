@@ -87,20 +87,29 @@ export function AuthProvider({ children }) {
   // =====================================================
 
   async function googleLogin(credential) {
-    const { data } = await api.post("/auth/google", {
-      credential,
-    });
+  const { data } = await api.post("/auth/google", {
+    credential,
+  });
 
-    if (data.token) {
-      localStorage.setItem("cc_token", data.token);
-    }
-
-    setUser(data.user);
-
-    await setupPushNotifications();
-
-    return data.user;
+  if (data.token) {
+    localStorage.setItem("cc_token", data.token);
   }
+
+  // Remember the Google account used for CampusConnect.
+  // This is NOT the Google password or credential.
+  if (data.user?.email) {
+    localStorage.setItem(
+      "cc_google_email",
+      data.user.email
+    );
+  }
+
+  setUser(data.user);
+
+  await setupPushNotifications();
+
+  return data.user;
+}
 
   // =====================================================
   // LOGOUT
