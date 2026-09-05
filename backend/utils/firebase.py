@@ -63,23 +63,24 @@ def send_push_notification(
     initialize_firebase()
 
     data = {
-        "title": title,
-        "body": body,
-        "url": url,
+        "conversation_id": conversation_id or "",
     }
 
-    if conversation_id:
-        data["conversation_id"] = conversation_id
-
     message = messaging.Message(
+        token=installation_id,
+
         notification=messaging.Notification(
             title=title,
             body=body,
         ),
+
         data=data,
-        token=installation_id,
+
+        webpush=messaging.WebpushConfig(
+            fcm_options=messaging.WebpushFCMOptions(
+                link=url
+            )
+        ),
     )
 
-    return messaging.send(
-        message
-    )
+    return messaging.send(message)
