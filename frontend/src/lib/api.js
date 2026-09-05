@@ -22,6 +22,16 @@ export function formatApiErrorDetail(detail) {
 
 export function fileUrl(path) {
   if (!path) return null;
+
+  // Cloudinary URL
+  if (
+    path.startsWith("http://") ||
+    path.startsWith("https://")
+  ) {
+    return path;
+  }
+
+  // Old Emergent Storage path
   return `${API}/files/${path}`;
 }
 

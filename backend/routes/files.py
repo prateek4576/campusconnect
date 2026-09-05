@@ -1,7 +1,7 @@
+import io
 import uuid
-from utils.storage import put_object, get_object
-from dependencies.auth import get_current_user, get_current_admin
 from datetime import datetime, timezone
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -10,11 +10,9 @@ from fastapi import (
     File,
 )
 
-from fastapi.responses import Response as FastAPIResponse
-
 from config.database import db
 from dependencies.auth import get_current_user
-from utils.storage import put_object, get_object
+from utils.cloudinary import upload_image
 
 
 router = APIRouter(
@@ -32,25 +30,37 @@ async def upload(
     user: dict = Depends(get_current_user)
 ):
 
-    ext = (
-        file.filename.split(".")[-1]
-        if file.filename and "." in file.filename
-        else "bin"
-    ).lower()
+    # -------------------------------------------------
+    # Validate file type
+    # -------------------------------------------------
 
-    if ext not in [
-        "jpg",
-        "jpeg",
-        "png",
-        "gif",
-        "webp"
-    ]:
+    allowed_types = {
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+    }
+
+    if file.content_type not in allowed_types:
         raise HTTPException(
             status_code=400,
-            detail="Only image files allowed"
+            detail="Only JPG, PNG and WebP images are allowed"
         )
 
+    # -------------------------------------------------
+    # Read file
+    # -------------------------------------------------
+
     data = await file.read()
+
+    if not data:
+        raise HTTPException(
+            status_code=400,
+            detail="Empty image file"
+        )
+
+    # -------------------------------------------------
+    # Original upload safety limit
+    # -------------------------------------------------
 
     if len(data) > 5 * 1024 * 1024:
         raise HTTPException(
@@ -58,74 +68,73 @@ async def upload(
             detail="File too large (max 5MB)"
         )
 
-    content_type = (
-        file.content_type
-        or f"image/{ext}"
-    )
+    # -------------------------------------------------
+    # Upload to Cloudinary
+    # -------------------------------------------------
 
-    path = (
-        f"campusconnect/uploads/"
-        f"{user['id']}/"
-        f"{uuid.uuid4()}.{ext}"
-    )
+    try:
 
-    result = put_object(
-        path,
-        data,
-        content_type
-    )
+        result = upload_image(
+            io.BytesIO(data),
+            file.filename or "image"
+        )
+
+    except Exception as e:
+
+        print(
+            f"Cloudinary upload failed: {e}"
+        )
+
+        raise HTTPException(
+            status_code=500,
+            detail="Image upload failed"
+        )
+
+    image_url = result.get("url")
+
+    if not image_url:
+        raise HTTPException(
+            status_code=500,
+            detail="Cloudinary did not return an image URL"
+        )
+
+    # -------------------------------------------------
+    # Save metadata
+    # -------------------------------------------------
+
+    file_id = str(uuid.uuid4())
 
     await db.files.insert_one({
-        "id": str(uuid.uuid4()),
-        "storage_path": result["path"],
+        "id": file_id,
+
+        # Cloudinary
+        "storage_provider": "cloudinary",
+        "cloudinary_url": image_url,
+        "cloudinary_public_id": result.get("public_id"),
+
+        # Original information
         "original_filename": file.filename,
-        "content_type": content_type,
-        "size": result.get(
-            "size",
-            len(data)
-        ),
+        "content_type": file.content_type,
+
+        # Cloudinary image information
+        "size": result.get("bytes", len(data)),
+        "width": result.get("width"),
+        "height": result.get("height"),
+        "format": result.get("format"),
+
         "user_id": user["id"],
         "is_deleted": False,
+
         "created_at": datetime.now(
-    timezone.utc
-).isoformat(),
+            timezone.utc
+        ).isoformat(),
     })
 
+    # -------------------------------------------------
+    # Return Cloudinary URL
+    # -------------------------------------------------
+
     return {
-        "path": result["path"]
+        "path": image_url,
+        "url": image_url,
     }
-
-
-# =====================================================
-# DOWNLOAD / VIEW FILE
-# =====================================================
-
-@router.get("/files/{path:path}")
-async def download(
-    path: str
-):
-
-    record = await db.files.find_one(
-        {
-            "storage_path": path,
-            "is_deleted": False
-        }
-    )
-
-    if not record:
-        raise HTTPException(
-            status_code=404,
-            detail="File not found"
-        )
-
-    data, content_type = get_object(
-        path
-    )
-
-    return FastAPIResponse(
-        content=data,
-        media_type=record.get(
-            "content_type",
-            content_type
-        )
-    )

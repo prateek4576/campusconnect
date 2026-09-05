@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from config.database import db, client
-from utils.storage import init_storage
+
 
 from routes.auth import router as auth_router
 from routes.items import router as items_router
@@ -189,17 +189,8 @@ async def startup():
             ]
         )
 
-        # ---------------------------------------------
-        # EMAIL VERIFICATIONS
-        # ---------------------------------------------
 
-  
 
-        # ---------------------------------------------
-        # STORAGE
-        # ---------------------------------------------
-
-        init_storage()
 
         print("CampusConnect backend started successfully.")
 
