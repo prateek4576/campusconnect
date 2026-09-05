@@ -71,7 +71,7 @@ async def create_item(
     # Save item
     await db.items.insert_one(doc)
 
-    # =================================================
+        # =================================================
     # SEND NEW ITEM PUSH NOTIFICATION
     # =================================================
 
@@ -87,6 +87,7 @@ async def create_item(
         },
         {
             "_id": 0,
+            "id": 1,
             "fcm_installations": 1
         }
     )
@@ -95,23 +96,41 @@ async def create_item(
         length=1000
     )
 
+    print(
+        f"📢 New {item_type} item created: {doc['title']}"
+    )
+
+    print(
+        f"📢 Users with FCM installations: {len(users)}"
+    )
+
     for recipient in users:
 
         installations = recipient.get(
             "fcm_installations",
-        []
-    )
-
-    for installation_id in installations:
-
-        background_tasks.add_task(
-            send_new_item_notification,
-            installation_id,
-            item_type,
-            doc["title"],
-            doc["location"],
-            doc["id"],
+            []
         )
+
+        print(
+            f"📱 Recipient {recipient.get('id')} "
+            f"has {len(installations)} installation(s)"
+        )
+
+        for installation_id in installations:
+
+            print(
+                f"🚀 Scheduling notification for token: "
+                f"{installation_id[:20]}..."
+            )
+
+            background_tasks.add_task(
+                send_new_item_notification,
+                installation_id,
+                item_type,
+                doc["title"],
+                doc["location"],
+                doc["id"],
+            )
 
     return item_from_doc(doc)
 

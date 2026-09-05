@@ -108,22 +108,45 @@ def send_new_item_notification(
     item_id: str,
 ):
     """
-    Send a notification when a new lost/found item is posted.
+    Send notification when a new Lost/Found item is posted.
     """
 
     if item_type == "lost":
         title = "New Lost Item"
         body = f"{item_title} was reported lost near {location}."
-        url = f"/items/lost"
+        url = "/items/lost"
+
     else:
         title = "New Found Item"
         body = f"{item_title} was reported found near {location}."
-        url = f"/items/found"
+        url = "/items/found"
 
-    return send_push_notification(
-        installation_id=installation_id,
-        title=title,
-        body=body,
-        url=url,
-        conversation_id=None,
+    print(
+        f"🔔 Sending {item_type} notification "
+        f"to token {installation_id[:20]}..."
     )
+
+    try:
+
+        response = send_push_notification(
+            installation_id=installation_id,
+            title=title,
+            body=body,
+            url=url,
+            conversation_id=None,
+        )
+
+        print(
+            f"✅ {item_type} notification sent successfully: "
+            f"{response}"
+        )
+
+        return response
+
+    except Exception as e:
+
+        print(
+            f"❌ Failed to send {item_type} notification: {e}"
+        )
+
+        return None
