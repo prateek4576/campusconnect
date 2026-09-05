@@ -7,7 +7,7 @@ importScripts(
 );
 
 firebase.initializeApp({
-  apiKey: "AIzaSyAn9rwRxcqQlplplQH7S-ZoN2dbtmEye6PMc",
+  apiKey: "YOUR_API_KEY",
   authDomain: "campusconnect-657d9.firebaseapp.com",
   projectId: "campusconnect-657d9",
   storageBucket: "campusconnect-657d9.firebasestorage.app",
@@ -22,13 +22,4 @@ messaging.onBackgroundMessage((payload) => {
     "[firebase-messaging-sw.js] Background message received:",
     payload
   );
-});
-
-/* -------------------------------------------------------
-   PWA INSTALLABILITY
-   ------------------------------------------------------- */
-
-self.addEventListener("fetch", (event) => {
-  // Let the browser handle the request normally.
-  event.respondWith(fetch(event.request));
 });

@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import ItemSkeleton from "../components/ItemSkeleton";
-import InstallPWA from "../components/InstallPWA";
+
 
 import {
   PackageX,
@@ -570,9 +570,7 @@ export default function Dashboard() {
         </div>
       </section>
 
-            {/* ================= INSTALL CAMPUSCONNECT ================= */}
-
-      <InstallPWA />
+          
 
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4">

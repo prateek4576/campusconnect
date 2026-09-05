@@ -1,7 +1,6 @@
 import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
-import { useEffect } from "react";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
@@ -29,41 +28,6 @@ function Layout({ children }) {
 
 function App() {
 
-   useEffect(() => {
-  const handleBeforeInstallPrompt = (event) => {
-    event.preventDefault();
-
-    console.log("✅ beforeinstallprompt fired");
-
-    window.deferredPwaPrompt = event;
-
-    window.dispatchEvent(new Event("pwa-install-ready"));
-  };
-
-  const handleAppInstalled = () => {
-    console.log("✅ CampusConnect installed");
-
-    window.deferredPwaPrompt = null;
-
-    window.dispatchEvent(new Event("pwa-installed"));
-  };
-
-  window.addEventListener(
-    "beforeinstallprompt",
-    handleBeforeInstallPrompt
-  );
-
-  window.addEventListener("appinstalled", handleAppInstalled);
-
-  return () => {
-    window.removeEventListener(
-      "beforeinstallprompt",
-      handleBeforeInstallPrompt
-    );
-
-    window.removeEventListener("appinstalled", handleAppInstalled);
-  };
-}, []);
   return (
     <div className="App">
       <BrowserRouter>
