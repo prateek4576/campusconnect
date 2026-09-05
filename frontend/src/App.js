@@ -37,7 +37,6 @@ function App() {
 
     window.deferredPwaPrompt = event;
 
-    // Tell any component that the prompt is available
     window.dispatchEvent(new Event("pwa-install-ready"));
   };
 
