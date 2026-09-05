@@ -5,6 +5,7 @@ export default function InstallPWA() {
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
+    // Check if already installed
     const checkInstalled = () => {
       const standalone =
         window.matchMedia("(display-mode: standalone)").matches ||
@@ -15,55 +16,56 @@ export default function InstallPWA() {
 
     checkInstalled();
 
-    // Check whether App.jsx already captured the install event
+    // If App.js already captured the event
     if (window.deferredPwaPrompt) {
       setCanInstall(true);
     }
 
-    const handleBeforeInstallPrompt = () => {
+    // Event fired by App.js when prompt becomes available
+    const handleInstallReady = () => {
+      console.log("✅ Install button enabled");
       setCanInstall(true);
     };
 
-    const handleAppInstalled = () => {
+    const handleInstalled = () => {
       setIsInstalled(true);
       setCanInstall(false);
-      window.deferredPwaPrompt = null;
     };
 
-    window.addEventListener(
-      "beforeinstallprompt",
-      handleBeforeInstallPrompt
-    );
-
-    window.addEventListener("appinstalled", handleAppInstalled);
+    window.addEventListener("pwa-install-ready", handleInstallReady);
+    window.addEventListener("pwa-installed", handleInstalled);
 
     return () => {
       window.removeEventListener(
-        "beforeinstallprompt",
-        handleBeforeInstallPrompt
+        "pwa-install-ready",
+        handleInstallReady
       );
 
-      window.removeEventListener("appinstalled", handleAppInstalled);
+      window.removeEventListener(
+        "pwa-installed",
+        handleInstalled
+      );
     };
   }, []);
 
   const handleInstall = async () => {
     const promptEvent = window.deferredPwaPrompt;
 
+    console.log("Install prompt:", promptEvent);
+
     if (!promptEvent) {
       alert(
-        "CampusConnect is not ready to install yet.\n\n" +
-        "In Chrome, open the ⋮ menu and look for " +
-        '"Install app" or "Add to Home screen".'
+        "CampusConnect cannot show the automatic install prompt yet.\n\n" +
+        'Please open Chrome ⋮ and choose "Install app" or "Add to Home screen".'
       );
       return;
     }
 
     promptEvent.prompt();
 
-    const result = await promptEvent.userChoice;
+    const { outcome } = await promptEvent.userChoice;
 
-    console.log("Install result:", result.outcome);
+    console.log("Install result:", outcome);
 
     window.deferredPwaPrompt = null;
     setCanInstall(false);
@@ -77,6 +79,7 @@ export default function InstallPWA() {
     <section className="mt-12">
       <div className="bg-[#0B2545] text-white border-2 border-black brutal-shadow-lg p-6 md:p-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          
           <div>
             <div className="inline-block bg-[#E9C46A] text-black border-2 border-black px-3 py-1 font-bold uppercase text-xs tracking-widest brutal-shadow-sm mb-3">
               Install
@@ -100,6 +103,7 @@ export default function InstallPWA() {
               ? "Install CampusConnect →"
               : "Add to Home Screen →"}
           </button>
+
         </div>
       </div>
     </section>
