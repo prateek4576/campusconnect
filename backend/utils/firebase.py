@@ -62,13 +62,26 @@ def send_push_notification(
 
     initialize_firebase()
 
+    # Your production frontend URL
+    frontend_url = os.environ.get(
+        "FRONTEND_URL",
+        "https://campusconnect-prateek57.vercel.app"
+    ).rstrip("/")
+
+    # Convert "/messages" into a full HTTPS URL
+    if url.startswith("http://") or url.startswith("https://"):
+        notification_url = url
+    else:
+        notification_url = f"{frontend_url}/{url.lstrip('/')}"
+
     data = {
+        "title": title,
+        "body": body,
+        "url": notification_url,
         "conversation_id": conversation_id or "",
     }
 
     message = messaging.Message(
-        token=installation_id,
-
         notification=messaging.Notification(
             title=title,
             body=body,
@@ -76,9 +89,11 @@ def send_push_notification(
 
         data=data,
 
+        token=installation_id,
+
         webpush=messaging.WebpushConfig(
             fcm_options=messaging.WebpushFCMOptions(
-                link=url
+                link=notification_url
             )
         ),
     )
