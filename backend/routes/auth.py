@@ -96,6 +96,18 @@ async def login(
 
     password_hash = user.get("password_hash")
 
+    if (
+        user.get("auth_provider") == "google"
+        and not password_hash
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "This account uses Google Sign-In. "
+                "Please click 'Continue with Google'."
+            )
+        )
+
     if not password_hash or not verify_password(
         payload.password,
         password_hash
@@ -104,10 +116,8 @@ async def login(
             status_code=401,
             detail="Invalid email or password"
         )
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid email or password"
-        )
+
+   
 
     token = create_access_token(
         user["id"],
