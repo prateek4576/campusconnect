@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import ItemSkeleton from "../components/ItemSkeleton";
 
@@ -46,7 +46,10 @@ const actions = [
 ];
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
   const [feedback, setFeedback] = useState({
@@ -117,6 +120,38 @@ export default function Dashboard() {
       .finally(() => {
         setLoadingItems(false);
       });
+  }, []);
+
+  // =====================================================
+  // DASHBOARD BACK BUTTON PROTECTION
+  // =====================================================
+
+  useEffect(() => {
+    // Add a history entry for the Dashboard.
+    // This lets us intercept the browser/mobile Back button.
+    window.history.pushState(
+      { dashboardGuard: true },
+      "",
+      window.location.href,
+    );
+
+    const handleBackButton = () => {
+      // Stay on Dashboard.
+      window.history.pushState(
+        { dashboardGuard: true },
+        "",
+        window.location.href,
+      );
+
+      // Show logout confirmation.
+      setShowLogoutConfirm(true);
+    };
+
+    window.addEventListener("popstate", handleBackButton);
+
+    return () => {
+      window.removeEventListener("popstate", handleBackButton);
+    };
   }, []);
 
   const handleFeedbackSubmit = async (e) => {
@@ -314,7 +349,7 @@ export default function Dashboard() {
                       }}
                     >
                       {item.type}
-                    </span> 
+                    </span>
 
                     <span className="font-bold uppercase text-[10px]">
                       {item.category}
@@ -533,6 +568,69 @@ export default function Dashboard() {
           </form>
         </div>
       </section>
+
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4">
+          <div
+            className="bg-[#FDFBF7] border-2 border-black brutal-shadow-lg w-full max-w-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* HEADER */}
+            <div className="bg-[#E63946] text-white border-b-2 border-black p-5 flex items-center justify-between">
+              <h2 className="font-display font-black text-2xl uppercase">
+                Logout
+              </h2>
+
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                className="bg-white text-black border-2 border-black px-3 py-1 font-black text-xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* CONTENT */}
+            <div className="p-6 md:p-8">
+              <h3 className="font-display font-black text-3xl uppercase">
+                Are you sure?
+              </h3>
+
+              <p className="mt-5 text-lg">
+                Your lost items are going to miss you.
+              </p>
+
+              <div className="grid grid-cols-2 gap-4 mt-8">
+                {/* STAY */}
+                <button
+                  type="button"
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="bg-white text-black border-2 border-black px-5 py-4 brutal-shadow-sm brutal-press font-display font-black uppercase text-lg"
+                >
+                  Stay
+                </button>
+
+                {/* LOGOUT */}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setShowLogoutConfirm(false);
+
+                    await logout();
+
+                    navigate("/", {
+                      replace: true,
+                    });
+                  }}
+                  className="bg-[#E63946] text-white border-2 border-black px-5 py-4 brutal-shadow-sm brutal-press font-display font-black uppercase text-lg"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
