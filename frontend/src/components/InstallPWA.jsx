@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 
 export default function InstallPWA() {
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [canInstall, setCanInstall] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
-    // Check whether the app is already installed
     const checkInstalled = () => {
       const standalone =
         window.matchMedia("(display-mode: standalone)").matches ||
@@ -16,22 +15,25 @@ export default function InstallPWA() {
 
     checkInstalled();
 
-    // Android / Chromium install prompt
-    const handleBeforeInstallPrompt = (event) => {
-      event.preventDefault();
-      setDeferredPrompt(event);
+    // Check whether App.jsx already captured the install event
+    if (window.deferredPwaPrompt) {
+      setCanInstall(true);
+    }
+
+    const handleBeforeInstallPrompt = () => {
+      setCanInstall(true);
+    };
+
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setCanInstall(false);
+      window.deferredPwaPrompt = null;
     };
 
     window.addEventListener(
       "beforeinstallprompt",
       handleBeforeInstallPrompt
     );
-
-    // Detect successful installation
-    const handleAppInstalled = () => {
-      setIsInstalled(true);
-      setDeferredPrompt(null);
-    };
 
     window.addEventListener("appinstalled", handleAppInstalled);
 
@@ -46,34 +48,27 @@ export default function InstallPWA() {
   }, []);
 
   const handleInstall = async () => {
-    // Already installed
-    if (isInstalled) {
+    const promptEvent = window.deferredPwaPrompt;
+
+    if (!promptEvent) {
+      alert(
+        "CampusConnect is not ready to install yet.\n\n" +
+        "In Chrome, open the ⋮ menu and look for " +
+        '"Install app" or "Add to Home screen".'
+      );
       return;
     }
 
-    // Android / Chrome / Edge etc.
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
+    promptEvent.prompt();
 
-      const { outcome } = await deferredPrompt.userChoice;
+    const result = await promptEvent.userChoice;
 
-      console.log("PWA install choice:", outcome);
+    console.log("Install result:", result.outcome);
 
-      setDeferredPrompt(null);
-      return;
-    }
-
-    // iPhone / iPad fallback
-    alert(
-      'To add CampusConnect to your Home Screen on iPhone:\n\n' +
-        '1. Open CampusConnect in Safari\n' +
-        '2. Tap the Share button\n' +
-        '3. Tap "Add to Home Screen"\n' +
-        '4. Tap "Add"'
-    );
+    window.deferredPwaPrompt = null;
+    setCanInstall(false);
   };
 
-  // Don't show button after installation
   if (isInstalled) {
     return null;
   }
@@ -101,7 +96,9 @@ export default function InstallPWA() {
             onClick={handleInstall}
             className="bg-[#E9C46A] text-black border-2 border-black px-6 py-4 brutal-shadow-sm brutal-press font-display font-black uppercase whitespace-nowrap"
           >
-            Install CampusConnect →
+            {canInstall
+              ? "Install CampusConnect →"
+              : "Add to Home Screen →"}
           </button>
         </div>
       </div>

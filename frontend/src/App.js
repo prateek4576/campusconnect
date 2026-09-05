@@ -1,6 +1,7 @@
 import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { useEffect } from "react";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
@@ -13,7 +14,6 @@ import ItemsList from "./pages/ItemsList";
 import MyAccount from "./pages/MyAccount";
 import About from "./pages/About";
 import Messages from "./pages/Messages";
-
 
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminRoute from "./components/AdminRoute";
@@ -28,6 +28,26 @@ function Layout({ children }) {
 }
 
 function App() {
+
+   useEffect(() => {
+    const handleBeforeInstallPrompt = (event) => {
+      event.preventDefault();
+      console.log("✅ PWA install prompt available");
+      window.deferredPwaPrompt = event;
+    };
+
+    window.addEventListener(
+      "beforeinstallprompt",
+      handleBeforeInstallPrompt
+    );
+
+    return () => {
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt
+      );
+    };
+  }, []);
   return (
     <div className="App">
       <BrowserRouter>
@@ -107,15 +127,15 @@ function App() {
               }
             />
             <Route
-  path="/messages"
-  element={
-    <ProtectedRoute>
-      <Layout>
-        <Messages />
-      </Layout>
-    </ProtectedRoute>
-  }
-/>
+              path="/messages"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Messages />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
 
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
           </Routes>
