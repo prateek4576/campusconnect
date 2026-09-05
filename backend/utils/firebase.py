@@ -99,3 +99,31 @@ def send_push_notification(
     )
 
     return messaging.send(message)
+
+def send_new_item_notification(
+    installation_id: str,
+    item_type: str,
+    item_title: str,
+    location: str,
+    item_id: str,
+):
+    """
+    Send a notification when a new lost/found item is posted.
+    """
+
+    if item_type == "lost":
+        title = "New Lost Item"
+        body = f"{item_title} was reported lost near {location}."
+        url = f"/items/lost"
+    else:
+        title = "New Found Item"
+        body = f"{item_title} was reported found near {location}."
+        url = f"/items/found"
+
+    return send_push_notification(
+        installation_id=installation_id,
+        title=title,
+        body=body,
+        url=url,
+        conversation_id=None,
+    )

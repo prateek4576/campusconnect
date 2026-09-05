@@ -17,7 +17,7 @@ from models.item import (
 )
 
 from dependencies.auth import get_current_user
-from utils.email import send_new_item_email
+from utils.firebase import send_new_item_notification
 
 
 router = APIRouter(
@@ -71,12 +71,23 @@ async def create_item(
     # Save item
     await db.items.insert_one(doc)
 
-    # Get registered users
+    # =================================================
+    # SEND NEW ITEM PUSH NOTIFICATION
+    # =================================================
+
     users_cursor = db.users.find(
-        {},
+        {
+            "id": {
+                "$ne": user["id"]
+            },
+            "fcm_installations": {
+                "$exists": True,
+                "$ne": []
+            }
+        },
         {
             "_id": 0,
-            "email": 1
+            "fcm_installations": 1
         }
     )
 
@@ -84,19 +95,23 @@ async def create_item(
         length=1000
     )
 
-    recipients = [
-        u["email"]
-        for u in users
-        if u.get("email")
-        and u["email"] != user["email"]
-    ]
+    for recipient in users:
 
-    # Send notification emails in background
-    background_tasks.add_task(
-        send_new_item_email,
-        doc,
-        recipients
+        installations = recipient.get(
+            "fcm_installations",
+        []
     )
+
+    for installation_id in installations:
+
+        background_tasks.add_task(
+            send_new_item_notification,
+            installation_id,
+            item_type,
+            doc["title"],
+            doc["location"],
+            doc["id"],
+        )
 
     return item_from_doc(doc)
 

@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 export default function Landing() {
- const [showDeveloper, setShowDeveloper] = useState(false);
+  const [showDeveloper, setShowDeveloper] = useState(false);
 
   const faqs = [
     {
@@ -34,6 +34,17 @@ export default function Landing() {
       question: "Is my personal information safe?",
       answer:
         "Yes. Your personal information is kept private. Other users cannot see your email address or phone number directly on your posts. You can communicate with other students through the built-in messaging system and choose what information you want to share.",
+    },
+
+    {
+      question: "How will I be notified about new posts?",
+      answer:
+        "You will receive a notification when a new item is posted on CampusConnect. Please allow notifications when prompted by the website and make sure browser notifications are enabled so you don't miss important updates.",
+    },
+    {
+      question: "How will I know if someone messages me?",
+      answer:
+        "You will receive a notification when someone sends you a message on CampusConnect. Please allow notifications when prompted by the website and make sure browser notifications are enabled so you never miss a message.",
     },
     {
       question: "Is CampusConnect free?",

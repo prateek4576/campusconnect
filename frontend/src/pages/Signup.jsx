@@ -70,37 +70,30 @@ export default function Signup() {
   // FINAL SIGNUP
   // =====================================================
 
- // =====================================================
-// MANUAL SIGNUP
-// =====================================================
+  // =====================================================
+  // MANUAL SIGNUP
+  // =====================================================
 
-const submit = async (e) => {
-  e.preventDefault();
+  const submit = async (e) => {
+    e.preventDefault();
 
-  setError("");
-  setBusy(true);
+    setError("");
+    setBusy(true);
 
-  try {
-    await register(
-      form.name,
-      form.email,
-      form.phone,
-      form.password
-    );
+    try {
+      await register(form.name, form.email, form.phone, form.password);
 
-    nav("/dashboard");
-  } catch (e) {
-    setError(
-      formatApiErrorDetail(
-        e.response?.data?.detail
-      ) ||
-      e.message ||
-      "Signup failed"
-    );
-  } finally {
-    setBusy(false);
-  }
-};
+      nav("/dashboard");
+    } catch (e) {
+      setError(
+        formatApiErrorDetail(e.response?.data?.detail) ||
+          e.message ||
+          "Signup failed",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
 
   // =====================================================
   // MASK EMAIL
@@ -153,13 +146,6 @@ const submit = async (e) => {
                   <span>→</span>
                   <span>
                     Used to create and identify your CampusConnect account.
-                  </span>
-                </li>
-
-                <li className="flex gap-2">
-                  <span>→</span>
-                  <span>
-                    Used to log in to your account and keep it secure.
                   </span>
                 </li>
 
