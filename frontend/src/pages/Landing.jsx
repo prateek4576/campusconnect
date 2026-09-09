@@ -225,11 +225,11 @@ export default function Landing() {
               </Link>
 
               <Link
-                to="/signup"
-                className="inline-flex items-center gap-2 bg-white border-2 border-black px-6 py-3 brutal-shadow brutal-press font-bold uppercase"
-              >
-                Report Lost Item
-              </Link>
+  to="/signup"
+  className="inline-flex items-center gap-2 bg-[#0B2545] text-white border-2 border-black px-6 py-3 brutal-shadow brutal-press font-bold uppercase"
+>
+  Report Lost Item
+</Link>
             </div>
 
             {/* Decorative blocks */}

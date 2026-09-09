@@ -200,3 +200,32 @@ body.dark .bg-\[\#E9C46A\] svg {
     color: #000000 !important;
     stroke: #000000 !important;
 }
+
+/* =========================================================
+   ADMIN TABLE HOVER
+   ========================================================= */
+
+body.dark table tbody tr:hover {
+    background-color: #1F2937 !important;
+    color: #FFFFFF !important;
+}
+
+body.dark table tbody tr:hover td,
+body.dark table tbody tr:hover a {
+    color: #FFFFFF !important;
+}
+
+/* =========================================================
+   ADMIN DASHBOARD NAVBAR - DARK MODE
+   ========================================================= */
+
+body.dark .admin-navbar {
+    background-color: #000000 !important;
+    color: #FFFFFF !important;
+    border-bottom-color: #FFFFFF !important;
+}
+
+body.dark .admin-navbar h1,
+body.dark .admin-navbar div {
+    color: #FFFFFF;
+}
