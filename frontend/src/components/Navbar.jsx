@@ -1,6 +1,7 @@
 import { NavLink, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { LogOut, Menu, X } from "lucide-react";
+import { useTheme } from "../context/ThemeContext";
+import { LogOut, Menu, X, Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 import ConfirmModal from "../components/ConfirmModal";
 import api from "../lib/api";
@@ -17,6 +18,8 @@ const links = [
 export default function Navbar() {
   const { user, logout } = useAuth();
   const nav = useNavigate();
+
+  const { darkMode, toggleDarkMode } = useTheme();
 
   const [open, setOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -93,6 +96,26 @@ export default function Navbar() {
               </NavLink>
             ))}
 
+            {/* DARK MODE BUTTON */}
+            <button
+              type="button"
+              onClick={toggleDarkMode}
+              aria-label={
+                darkMode ? "Switch to light mode" : "Switch to dark mode"
+              }
+              title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+              className="ml-2 w-10 h-10 flex items-center justify-center border-2 border-black bg-[#E9C46A] text-black brutal-shadow-sm brutal-press"
+            >
+              {darkMode ? (
+                <Sun size={18} strokeWidth={2.5} />
+              ) : (
+                <Moon size={18} strokeWidth={2.5} />
+              )}
+            </button>
+
+            {/* LOGOUT BUTTON */}
+            
+
             {/* LOGOUT BUTTON */}
             <button
               onClick={() => setShowLogoutConfirm(true)}
@@ -139,6 +162,17 @@ export default function Navbar() {
                 </span>
               </NavLink>
             ))}
+
+            {/* MOBILE DARK MODE */}
+            <button
+              type="button"
+              onClick={toggleDarkMode}
+              className="px-3 py-2 bg-[#E9C46A] text-black border-2 border-black font-semibold uppercase text-left flex items-center gap-2"
+            >
+              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+
+              {darkMode ? "Light Mode" : "Dark Mode"}
+            </button>
 
             {/* MOBILE LOGOUT */}
             <button

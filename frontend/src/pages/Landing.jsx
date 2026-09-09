@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 import Footer from "../components/Footer";
+import { useTheme } from "../context/ThemeContext";
 
 import { useState } from "react";
 import {
@@ -9,10 +10,13 @@ import {
   PackageOpen,
   Users,
   ChevronDown,
+  Moon,
+  Sun,
 } from "lucide-react";
 
 export default function Landing() {
   const [showDeveloper, setShowDeveloper] = useState(false);
+  const { darkMode, toggleDarkMode } = useTheme();
 
   const faqs = [
     {
@@ -68,19 +72,43 @@ export default function Landing() {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Link
-              to="/login"
-              className="px-4 py-2 border-2 border-black brutal-shadow-sm brutal-press font-semibold uppercase text-sm"
-            >
-              Login
-            </Link>
-            <Link
-              to="/signup"
-              className="px-4 py-2 bg-black text-white border-2 border-black brutal-shadow-sm brutal-press font-semibold uppercase text-sm"
-            >
-              Sign Up
-            </Link>
-          </div>
+  {/* DARK MODE BUTTON */}
+  <button
+    type="button"
+    onClick={toggleDarkMode}
+    aria-label={
+      darkMode
+        ? "Switch to light mode"
+        : "Switch to dark mode"
+    }
+    title={
+      darkMode
+        ? "Switch to light mode"
+        : "Switch to dark mode"
+    }
+    className="w-10 h-10 flex items-center justify-center bg-[#E9C46A] text-black border-2 border-black brutal-shadow-sm brutal-press"
+  >
+    {darkMode ? (
+      <Sun size={18} strokeWidth={2.5} />
+    ) : (
+      <Moon size={18} strokeWidth={2.5} />
+    )}
+  </button>
+
+  <Link
+    to="/login"
+    className="px-4 py-2 border-2 border-black brutal-shadow-sm brutal-press font-semibold uppercase text-sm"
+  >
+    Login
+  </Link>
+
+  <Link
+    to="/signup"
+    className="px-4 py-2 bg-black text-white border-2 border-black brutal-shadow-sm brutal-press font-semibold uppercase text-sm"
+  >
+    Sign Up
+  </Link>
+</div>
         </div>
       </header>
 

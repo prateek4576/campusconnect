@@ -1,6 +1,11 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
-const ThemeContext = createContext();
+const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
   const [darkMode, setDarkMode] = useState(() => {
@@ -8,21 +13,25 @@ export function ThemeProvider({ children }) {
   });
 
   useEffect(() => {
-    if (darkMode) {
-      document.body.classList.add("dark");
-      localStorage.setItem("cc_theme", "dark");
-    } else {
-      document.body.classList.remove("dark");
-      localStorage.setItem("cc_theme", "light");
-    }
+    document.body.classList.toggle("dark", darkMode);
+
+    localStorage.setItem(
+      "cc_theme",
+      darkMode ? "dark" : "light"
+    );
   }, [darkMode]);
 
   const toggleDarkMode = () => {
-    setDarkMode((prev) => !prev);
+    setDarkMode((previous) => !previous);
   };
 
   return (
-    <ThemeContext.Provider value={{ darkMode, toggleDarkMode }}>
+    <ThemeContext.Provider
+      value={{
+        darkMode,
+        toggleDarkMode,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );

@@ -1,6 +1,7 @@
 import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
@@ -31,6 +32,7 @@ function App() {
   return (
     <div className="App">
       <BrowserRouter>
+       <ThemeProvider>
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Landing />} />
@@ -120,6 +122,7 @@ function App() {
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
           </Routes>
         </AuthProvider>
+        </ThemeProvider>
       </BrowserRouter>
     </div>
   );

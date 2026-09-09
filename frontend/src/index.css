@@ -10,8 +10,13 @@ body {
     font-family: 'IBM Plex Sans', system-ui, sans-serif;
     background-color: #FDFBF7;
     color: #0A0A0A;
+
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
 }
 
 .font-display {
@@ -31,3 +36,167 @@ body {
 ::selection { background: #E9C46A; color: #0A0A0A; }
 
 
+/* =========================================================
+   DARK THEME
+   ========================================================= */
+
+body {
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
+body.dark {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+/* App root */
+body.dark .App {
+    background: #000000;
+}
+
+/* Main light backgrounds */
+body.dark .bg-\[\#FDFBF7\] {
+    background-color: #000000 !important;
+}
+
+/* White surfaces */
+body.dark .bg-white {
+    background-color: #000000 !important;
+}
+
+/* Black text */
+body.dark .text-black {
+    color: #ffffff !important;
+}
+
+/* Black borders */
+body.dark .border-black {
+    border-color: #ffffff !important;
+}
+
+/* Black backgrounds */
+body.dark .bg-black {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+/* Black text inside black-background elements */
+body.dark .bg-black .text-white {
+    color: #000000 !important;
+}
+
+/* Light surface used for inputs/selects */
+body.dark input,
+body.dark textarea,
+body.dark select {
+    background-color: #000000;
+    color: #ffffff;
+    border-color: ffffff;
+}
+
+/* Placeholder text */
+body.dark input::placeholder,
+body.dark textarea::placeholder {
+    color: #A7AFBA;
+}
+
+/* Select options */
+body.dark select option {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+/* Dividers */
+body.dark .divide-black > :not([hidden]) ~ :not([hidden]) {
+    border-color: #ffffff !important;
+}
+
+/* Keep the brutalist shadows visible */
+body.dark .brutal-shadow {
+    box-shadow: 4px 4px 0 #000;
+}
+
+body.dark .brutal-shadow-lg {
+    box-shadow: 6px 6px 0 #000;
+}
+
+body.dark .brutal-shadow-sm {
+    box-shadow: 2px 2px 0 #000;
+}
+
+/* Focus ring */
+body.dark *:focus-visible {
+    box-shadow: 0 0 0 3px #ffffff;
+}
+
+/* Text that explicitly uses opacity */
+body.dark .text-black\/70 {
+    color: rgba(245, 245, 245, 0.7) !important;
+}
+
+body.dark .text-black\/80 {
+    color: rgba(245, 245, 245, 0.8) !important;
+}
+
+/* White text remains white inside colored sections */
+body.dark .text-white {
+    color: #FFFFFF;
+}
+
+/* =========================================================
+   DARK NAVIGATION
+   ========================================================= */
+
+body.dark header {
+    background-color: #000000;
+}
+
+/* Don't change intentionally colored sections */
+body.dark .bg-\[\#E63946\],
+body.dark .bg-\[\#2A9D8F\],
+body.dark .bg-\[\#0B2545\],
+body.dark .bg-\[\#E9C46A\] {
+    /* Keep CampusConnect accent colors */
+}
+
+/* =========================================================
+   DARK MODALS
+   ========================================================= */
+
+body.dark .fixed .bg-white,
+body.dark .fixed .bg-\[\#FDFBF7\] {
+    background-color: #000000 !important;
+}
+
+/* Modal text */
+body.dark .fixed h1,
+body.dark .fixed h2,
+body.dark .fixed h3,
+body.dark .fixed h4,
+body.dark .fixed p {
+    color: #ffffff;
+}
+
+
+
+
+/* =========================================================
+   YELLOW ACCENT ELEMENTS
+   Black text/icons in both light and dark mode
+   ========================================================= */
+
+.bg-\[\#E9C46A\] {
+    color: #0A0A0A !important;
+}
+
+body.dark .bg-\[\#E9C46A\] {
+    color: #000000 !important;
+}
+
+/* Make icons inside yellow buttons black too */
+body.dark .bg-\[\#E9C46A\] svg {
+    color: #000000 !important;
+    stroke: #000000 !important;
+}

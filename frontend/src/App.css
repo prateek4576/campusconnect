@@ -1,1 +1,13 @@
-.App { min-height: 100vh; background: #FDFBF7; }
+.App {
+    min-height: 100vh;
+    background: #ffffff;
+    color: #000000;
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
+body.dark .App {
+    background: #000000;
+    color: #ffffff;
+}
