@@ -569,15 +569,6 @@ const mobileMenuButtonRef = useRef(null);
                     </a>
 
                     <a
-                      href="https://github.com/prateek4576"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-white border-2 border-black px-4 py-3 font-bold uppercase brutal-shadow-sm brutal-press"
-                    >
-                      GitHub →
-                    </a>
-
-                    <a
                       href="mailto:prateekjangir4576@gmail.com"
                       className="bg-[#E63946] text-white border-2 border-black px-4 py-3 font-bold uppercase brutal-shadow-sm brutal-press"
                     >
