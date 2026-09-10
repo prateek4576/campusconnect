@@ -2,7 +2,7 @@ import { NavLink, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { LogOut, Menu, X, Moon, Sun } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ConfirmModal from "../components/ConfirmModal";
 import api from "../lib/api";
 
@@ -22,6 +22,10 @@ export default function Navbar() {
   const { darkMode, toggleDarkMode } = useTheme();
 
   const [open, setOpen] = useState(false);
+
+  const mobileMenuRef = useRef(null);
+const mobileMenuButtonRef = useRef(null);
+
   const [unreadCount, setUnreadCount] = useState(0);
 
   const loadUnreadCount = async () => {
@@ -33,6 +37,28 @@ export default function Navbar() {
       console.error("Failed to load unread message count", error);
     }
   };
+
+  useEffect(() => {
+  const handleOutsideClick = (event) => {
+    if (!open) return;
+
+    const clickedInsideMenu =
+      mobileMenuRef.current?.contains(event.target);
+
+    const clickedMenuButton =
+      mobileMenuButtonRef.current?.contains(event.target);
+
+    if (!clickedInsideMenu && !clickedMenuButton) {
+      setOpen(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handleOutsideClick);
+
+  return () => {
+    document.removeEventListener("mousedown", handleOutsideClick);
+  };
+}, [open]);
 
   useEffect(() => {
     if (!user) return;
@@ -128,6 +154,7 @@ export default function Navbar() {
 
           {/* MOBILE MENU BUTTON */}
           <button
+           ref={mobileMenuButtonRef}
             className="md:hidden p-2 border-2 border-black"
             onClick={() => setOpen(!open)}
           >
@@ -137,7 +164,7 @@ export default function Navbar() {
 
         {/* MOBILE MENU */}
         {open && (
-          <div className="md:hidden border-t-2 border-black bg-[#FDFBF7] px-4 py-3 flex flex-col gap-2">
+          <div   ref={mobileMenuRef} className="md:hidden border-t-2 border-black bg-[#FDFBF7] px-4 py-3 flex flex-col gap-2">
             {links.map((l) => (
               <NavLink
                 key={l.to}

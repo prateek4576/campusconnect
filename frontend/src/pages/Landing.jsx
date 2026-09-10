@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Footer from "../components/Footer";
 import { useTheme } from "../context/ThemeContext";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   Search,
@@ -12,10 +12,18 @@ import {
   ChevronDown,
   Moon,
   Sun,
+  Menu,
+  X,
 } from "lucide-react";
 
 export default function Landing() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showDeveloper, setShowDeveloper] = useState(false);
+
+
+const mobileMenuRef = useRef(null);
+const mobileMenuButtonRef = useRef(null);
+
   const { darkMode, toggleDarkMode } = useTheme();
 
   const faqs = [
@@ -57,60 +65,150 @@ export default function Landing() {
     },
   ];
 
+  useEffect(() => {
+  const handleOutsideClick = (event) => {
+    if (!mobileMenuOpen) return;
+
+    const clickedInsideMenu =
+      mobileMenuRef.current?.contains(event.target);
+
+    const clickedMenuButton =
+      mobileMenuButtonRef.current?.contains(event.target);
+
+    if (!clickedInsideMenu && !clickedMenuButton) {
+      setMobileMenuOpen(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handleOutsideClick);
+
+  return () => {
+    document.removeEventListener("mousedown", handleOutsideClick);
+  };
+}, [mobileMenuOpen]);
+
   return (
     <div className="min-h-screen bg-[#FDFBF7]">
       <header className="sticky top-0 z-50 bg-[#FDFBF7] border-b-2 border-black">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 md:h-20 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-[#E63946] border-2 border-black flex items-center justify-center brutal-shadow-sm">
-              <span className="font-display font-black text-white text-lg">
-                C
-              </span>
-            </div>
-            <span className="font-display font-black text-xl md:text-2xl uppercase">
-              CampusConnect
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-  {/* DARK MODE BUTTON */}
-  <button
-    type="button"
-    onClick={toggleDarkMode}
-    aria-label={
-      darkMode
-        ? "Switch to light mode"
-        : "Switch to dark mode"
-    }
-    title={
-      darkMode
-        ? "Switch to light mode"
-        : "Switch to dark mode"
-    }
-    className="w-10 h-10 flex items-center justify-center bg-[#E9C46A] text-black border-2 border-black brutal-shadow-sm brutal-press"
-  >
-    {darkMode ? (
-      <Sun size={18} strokeWidth={2.5} />
-    ) : (
-      <Moon size={18} strokeWidth={2.5} />
-    )}
-  </button>
+  <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 md:h-20 flex items-center justify-between">
 
-  <Link
-    to="/login"
-    className="px-4 py-2 border-2 border-black brutal-shadow-sm brutal-press font-semibold uppercase text-sm"
-  >
-    Login
-  </Link>
+    {/* LOGO */}
+    <div className="flex items-center gap-2">
+      <div className="w-9 h-9 bg-[#E63946] border-2 border-black flex items-center justify-center brutal-shadow-sm">
+        <span className="font-display font-black text-white text-lg">
+          C
+        </span>
+      </div>
 
-  <Link
-    to="/signup"
-    className="px-4 py-2 bg-black text-white border-2 border-black brutal-shadow-sm brutal-press font-semibold uppercase text-sm"
-  >
-    Sign Up
-  </Link>
-</div>
-        </div>
-      </header>
+      <span className="font-display font-black text-xl md:text-2xl uppercase">
+        CampusConnect
+      </span>
+    </div>
+
+
+    {/* DESKTOP BUTTONS */}
+    <div className="hidden md:flex items-center gap-2">
+
+      {/* DARK MODE */}
+      <button
+        type="button"
+        onClick={toggleDarkMode}
+        aria-label={
+          darkMode
+            ? "Switch to light mode"
+            : "Switch to dark mode"
+        }
+        title={
+          darkMode
+            ? "Switch to light mode"
+            : "Switch to dark mode"
+        }
+        className="w-10 h-10 flex items-center justify-center bg-[#E9C46A] text-black border-2 border-black brutal-shadow-sm brutal-press"
+      >
+        {darkMode ? (
+          <Sun size={18} strokeWidth={2.5} />
+        ) : (
+          <Moon size={18} strokeWidth={2.5} />
+        )}
+      </button>
+
+      {/* LOGIN */}
+      <Link
+        to="/login"
+        className="px-4 py-2 border-2 border-black brutal-shadow-sm brutal-press font-semibold uppercase text-sm"
+      >
+        Login
+      </Link>
+
+      {/* SIGN UP */}
+      <Link
+        to="/signup"
+        className="px-4 py-2 bg-black text-white border-2 border-black brutal-shadow-sm brutal-press font-semibold uppercase text-sm"
+      >
+        Sign Up
+      </Link>
+    </div>
+
+
+    {/* MOBILE HAMBURGER */}
+    <button
+     ref={mobileMenuButtonRef}
+      type="button"
+      onClick={() => setMobileMenuOpen((prev) => !prev)}
+      aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+      className="md:hidden w-10 h-10 flex items-center justify-center border-2 border-black bg-[#E9C46A] text-black brutal-shadow-sm brutal-press"
+    >
+      {mobileMenuOpen ? (
+        <X size={22} strokeWidth={2.5} />
+      ) : (
+        <Menu size={22} strokeWidth={2.5} />
+      )}
+    </button>
+  </div>
+
+
+  {/* MOBILE MENU */}
+  {mobileMenuOpen && (
+    <div ref={mobileMenuRef} className="md:hidden border-t-2 border-black bg-[#FDFBF7] px-5 py-6">
+      <div className="flex flex-col items-center gap-4">
+
+        {/* DARK MODE */}
+        <button
+          type="button"
+          onClick={toggleDarkMode}
+          className="w-full max-w-xs px-5 py-4 bg-[#E9C46A] text-black border-2 border-black brutal-shadow-sm brutal-press font-bold uppercase flex items-center justify-center gap-3"
+        >
+          {darkMode ? (
+            <Sun size={20} strokeWidth={2.5} />
+          ) : (
+            <Moon size={20} strokeWidth={2.5} />
+          )}
+
+          {darkMode ? "Light Mode" : "Dark Mode"}
+        </button>
+
+        {/* LOGIN */}
+        <Link
+          to="/login"
+          onClick={() => setMobileMenuOpen(false)}
+          className="w-full max-w-xs px-5 py-4 bg-white text-black border-2 border-black brutal-shadow-sm brutal-press font-bold uppercase text-center"
+        >
+          Login
+        </Link>
+
+        {/* SIGN UP */}
+        <Link
+          to="/signup"
+          onClick={() => setMobileMenuOpen(false)}
+          className="w-full max-w-xs px-5 py-4 bg-black text-white border-2 border-black brutal-shadow-sm brutal-press font-bold uppercase text-center"
+        >
+          Sign Up
+        </Link>
+
+      </div>
+    </div>
+  )}
+</header>
 
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -225,11 +323,11 @@ export default function Landing() {
               </Link>
 
               <Link
-  to="/signup"
-  className="inline-flex items-center gap-2 bg-[#0B2545] text-white border-2 border-black px-6 py-3 brutal-shadow brutal-press font-bold uppercase"
->
-  Report Lost Item
-</Link>
+                to="/signup"
+                className="inline-flex items-center gap-2 bg-[#0B2545] text-white border-2 border-black px-6 py-3 brutal-shadow brutal-press font-bold uppercase"
+              >
+                Report Lost Item
+              </Link>
             </div>
 
             {/* Decorative blocks */}
