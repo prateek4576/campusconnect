@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import ConfirmModal from "../components/ConfirmModal";
+import { formatDate } from "../lib/date";
 
 import {
   Mail,
@@ -176,7 +177,7 @@ const returnedCount = myItems.filter(
             <div className="flex items-center gap-2">
               <Calendar size={14} />
               <span className="font-semibold">
-                Joined {new Date(user.created_at).toLocaleDateString()}
+                Joined {formatDate(user.created_at)}
               </span>
             </div>
 

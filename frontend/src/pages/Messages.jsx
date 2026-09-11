@@ -4,6 +4,7 @@ import { MessageCircle, ArrowLeft } from "lucide-react";
 import api from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import MessageSkeleton from "../components/MessageSkeleton";
+import { formatDateTime } from "../lib/date";
 
 export default function Messages() {
   const { user } = useAuth();
@@ -328,16 +329,7 @@ function ChatWindow({ conversationId, user, onBack }) {
 
                     <div className="text-[10px] uppercase mt-3 pt-2 border-t-2 border-black opacity-60">
 
-                      {new Date(
-                        msg.created_at
-                      ).toLocaleString("en-GB", {
-                        day: "numeric",
-                        month: "numeric",
-                        year: "numeric",
-                        hour: "numeric",
-                        minute: "2-digit",
-                        hour12: true,
-                      })}
+                      {formatDateTime(msg.created_at)}
 
                     </div>
 

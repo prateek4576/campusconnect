@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ConfirmModal from "../components/ConfirmModal";
+import { formatDate } from "../lib/date";
 
 import {
   Users,
@@ -903,9 +904,7 @@ function UsersTable({ users, onEdit, onDelete }) {
                 <td className="p-4">{user.phone || "—"}</td>
 
                 <td className="p-4 text-sm">
-                  {user.created_at
-                    ? new Date(user.created_at).toLocaleDateString()
-                    : "—"}
+                  {formatDate(user.created_at)}
                 </td>
 
                 <td className="p-4">
@@ -1039,7 +1038,9 @@ function ItemsTable({ items, onEdit, onDelete }) {
                   )}
                 </td>
 
-                <td className="p-4">{item.date}</td>
+                <td className="p-4">
+  {formatDate(item.date)}
+</td>
 
                 <td className="p-4">
                   <span
@@ -1144,9 +1145,7 @@ function FeedbacksTable({ feedbacks, onDelete }) {
                 </td>
 
                 <td className="p-4 text-sm">
-                  {feedback.created_at
-                    ? new Date(feedback.created_at).toLocaleDateString()
-                    : "—"}
+                  {formatDate(feedback.created_at)}
                 </td>
 
                 <td className="p-4">
